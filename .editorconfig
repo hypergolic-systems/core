@@ -1,0 +1,4 @@
+root = true
+
+[*]
+curly_bracket_next_line = true
