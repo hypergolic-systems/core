@@ -28,7 +28,7 @@ namespace Hgs.System.Electrical {
   public interface IProducer {
     Voltage GetVoltage();
 
-    void OnCalculateProduction(uint timeSeconds);
+    void OnCalculateProduction(uint timeSeconds, Vessel vessel);
 
     int TryDrawPower(int watts);
   }

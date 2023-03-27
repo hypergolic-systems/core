@@ -33,7 +33,7 @@ namespace Hgs.System {
 
         if (craft == null) {
           // Lazily instantiate the `Spacecraft` when we do have parts to simulate.
-          craft = new Spacecraft();
+          craft = new Spacecraft(vessel);
         }
 
         if (!craft.parts.ContainsKey(part.persistentId)) {
@@ -80,7 +80,7 @@ namespace Hgs.System {
       }
 
       // There are `SimulatedPart`s saved for this spacecraft, so instantiate them from the save file.
-      craft = new Spacecraft();
+      craft = new Spacecraft(vessel);
       foreach (var partNode in node.GetNodes("SIMULATED_PART")) {
         var simPart = LoadSimulatedPartFromConfig(partNode);
         if (simPart == null) {

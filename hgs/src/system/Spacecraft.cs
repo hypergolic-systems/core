@@ -7,7 +7,10 @@ namespace Hgs.System {
     public Bus highVoltageBus = new Bus(Voltage.High);
     public Bus lowVoltageBus = new Bus(Voltage.Low);
 
-    public Spacecraft() {
+    public Vessel vessel;
+
+    public Spacecraft(Vessel vessel) {
+      this.vessel = vessel;
       lowVoltageBus.AddProducer(new LvFromHvLink(highVoltageBus));
     }
 
@@ -16,10 +19,10 @@ namespace Hgs.System {
     }
 
     public void Tick(uint seconds) {
-      this.highVoltageBus.PreTick(seconds);
-      this.lowVoltageBus.PreTick(seconds);
-      this.highVoltageBus.Tick(seconds);
-      this.lowVoltageBus.Tick(seconds);
+      this.highVoltageBus.PreTick(seconds, vessel);
+      this.lowVoltageBus.PreTick(seconds, vessel);
+      this.highVoltageBus.Tick(seconds, vessel);
+      this.lowVoltageBus.Tick(seconds, vessel);
 
       foreach (var part in parts.Values) {
         if (part.simModule != null) {

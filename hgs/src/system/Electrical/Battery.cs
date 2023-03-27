@@ -37,7 +37,7 @@ namespace Hgs.System.Electrical {
       return draw;
     }
 
-    public void OnCalculateProduction(uint seconds) {
+    public void OnCalculateProduction(uint seconds, Vessel vessel) {
       // Batteries don't need to calculate their production.
     }
 

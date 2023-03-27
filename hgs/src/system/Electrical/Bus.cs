@@ -6,8 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Hgs.System;
 
-namespace Hgs.System.Electrical
-{
+namespace Hgs.System.Electrical {
 
   public class Bus : IBus, ISimulated {
     public Voltage Voltage;
@@ -64,9 +63,9 @@ namespace Hgs.System.Electrical
       this.storage.Add(storage);
     }
 
-    public void PreTick(uint delta) {
+    public void PreTick(uint delta, Vessel vessel) {
       foreach (IProducer producer in this.producers) {
-        producer.OnCalculateProduction(delta);
+        producer.OnCalculateProduction(delta, vessel);
       }
       foreach (IConsumer consumer in this.consumers) {
         consumer.OnCalculateDemand(delta);
@@ -74,7 +73,7 @@ namespace Hgs.System.Electrical
       this.cursorProducer.Reset();
     }
 
-    public void Tick(uint delta) {
+    public void Tick(uint delta, Vessel vessel) {
       foreach (IConsumer consumer in this.consumers) {
         consumer.OnPowerAvailable(this);
       }
@@ -98,7 +97,7 @@ namespace Hgs.System.Electrical
       }
     }
 
-    public void PostTick(uint delta) {}
+    public void PostTick(uint delta, Vessel vessel) {}
 
     class Cursor<T> where T: class {
       List<T> source;

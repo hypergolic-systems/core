@@ -18,7 +18,7 @@ namespace Hgs.System.Electrical {
       this.hvBus = hvBus;
     }
 
-    public void OnCalculateProduction(uint seconds) {
+    public void OnCalculateProduction(uint seconds, Vessel vessel) {
       // no calculations necessary.
     }
 

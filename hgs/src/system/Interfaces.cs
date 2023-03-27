@@ -1,8 +1,8 @@
 namespace Hgs.System {
 
   public interface ISimulated {
-    void PreTick(uint seconds);
-    void Tick(uint seconds);
-    void PostTick(uint seconds);
+    void PreTick(uint seconds, Vessel vessel);
+    void Tick(uint seconds, Vessel vessel);
+    void PostTick(uint seconds, Vessel vessel);
   }
 }
