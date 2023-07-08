@@ -1,13 +1,13 @@
-namespace Hgs.System.Electrical {
+namespace Hgs.Virtual.Electrical {
 
-  public class SolarPanel : SimulatedPart, IProducer {
+  public class SolarPanel : VirtualPart, IProducer {
     // TODO: this is earth's sun (64E6)
     const double H_SUN = 64000000;
 
     float solarIrradiance = 0;
 
 
-    public SolarPanel(uint partId) : base(partId) {}
+    public SolarPanel(uint partId, uint index) : base(partId, index) {}
 
     public Voltage GetVoltage() {
       return Voltage.Low;

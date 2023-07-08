@@ -1,4 +1,4 @@
-namespace Hgs.System.Electrical {
+namespace Hgs.Virtual.Electrical {
 
   public class SpacecraftElectricalSystem {
     public Bus hvSystem = new Bus(Voltage.High);

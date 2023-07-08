@@ -1,21 +1,19 @@
-using Hgs.System.Electrical;
+using Hgs.Part;
+using Hgs.Virtual.Electrical;
 using System.Collections.Generic;
+using UnityEngine;
 
-namespace Hgs.System {
-  public class Spacecraft {
-    public Dictionary<uint, SimulatedPart> parts = new Dictionary<uint, SimulatedPart>();
+namespace Hgs.Virtual {
+  public class VirtualVessel {
+    public Dictionary<uint, List<VirtualPart>> virtualPartsMap = new Dictionary<uint, List<VirtualPart>>();
     public Bus highVoltageBus = new Bus(Voltage.High);
     public Bus lowVoltageBus = new Bus(Voltage.Low);
 
     public Vessel vessel;
 
-    public Spacecraft(Vessel vessel) {
+    public VirtualVessel(Vessel vessel) {
       this.vessel = vessel;
       lowVoltageBus.AddProducer(new LvFromHvLink(highVoltageBus));
-    }
-
-    public void AddPart(SimulatedPart part) {
-      parts[part.partId] = part;
     }
 
     public void Tick(uint seconds) {
@@ -24,9 +22,11 @@ namespace Hgs.System {
       this.highVoltageBus.Tick(seconds, vessel);
       this.lowVoltageBus.Tick(seconds, vessel);
 
-      foreach (var part in parts.Values) {
-        if (part.simModule != null) {
-          part.simModule.OnSimulationUpdate(seconds);
+      foreach (var parts in virtualPartsMap.Values) {
+        foreach (var part in parts) {
+        if (part.liveModule != null) {
+          part.liveModule.OnSimulationUpdate(seconds);
+        }
         }
       }
     }

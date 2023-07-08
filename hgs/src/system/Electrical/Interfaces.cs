@@ -1,4 +1,4 @@
-namespace Hgs.System.Electrical {
+namespace Hgs.Virtual.Electrical {
   public enum Voltage {
     Low,
     High,

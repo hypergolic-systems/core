@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace Hgs.System {
+namespace Hgs.Virtual {
   [KSPAddon(KSPAddon.Startup.AllGameScenes, true)]
   public class HgSimulator : MonoBehaviour {
 

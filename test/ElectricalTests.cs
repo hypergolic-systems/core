@@ -1,7 +1,7 @@
 using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Hgs.Part;
-using Hgs.System.Electrical;
+using Hgs.Virtual.Electrical;
 using UnityEngine;
 
 namespace test;

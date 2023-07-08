@@ -4,9 +4,9 @@ using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-using Hgs.System;
+using Hgs.Virtual;
 
-namespace Hgs.System.Electrical {
+namespace Hgs.Virtual.Electrical {
 
   public class Bus : IBus, ISimulated {
     public Voltage Voltage;

@@ -1,11 +1,11 @@
 using System;
 
-namespace Hgs.System.Electrical {
+namespace Hgs.Virtual.Electrical {
 
-  public class Battery : SimulatedPart, IStorage {
+  public class Battery : VirtualPart, IStorage {
     private int stored = 0;
     private int capacity = 0;
-    public Battery(uint partId) : base(partId) {}
+    public Battery(uint partId, uint index) : base(partId, index) {}
 
     public override void Load(ConfigNode node) {
       base.Load(node);

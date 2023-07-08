@@ -1,11 +1,14 @@
-using Hgs.System;
-using Hgs.System.Electrical;
-using KSP.UI.Screens.DebugToolbar.Screens.Debug;
-using UnityEngine;
+using Hgs.Virtual;
+using Hgs.Virtual.Electrical;
+using System.Collections.Generic;
 
 namespace Hgs.Part {
 
-  public class HgPartBattery : HgSimulatedPartModule {
+  public class HgPartBattery : PartModule, IVirtualizedModule {
+
+    public PartModule module { get { return this; } }
+
+    public List<Virtual.VirtualPart> virtualParts { get; set; }
 
     [KSPField]
     public int capacity = 0;
@@ -18,23 +21,28 @@ namespace Hgs.Part {
 
     protected Battery battery {
       get {
-        return this.simPart as Battery;
+        return this.virtualParts[0] as Battery;
       }
     }
 
-    public override SimulatedPart CreateSimulatedPart() {
-      var battery = new Battery(this.part.persistentId);
+    public void InitializeVirtualParts() {
+      var battery = new Battery(this.part.persistentId, 0);
       battery.InitializeCapacity(capacity);
-      return battery;
+      this.virtualParts = new List<VirtualPart>(1);
+      this.virtualParts.Add(battery);
     }
 
-    public override void OnLinkToSpacecraft(Spacecraft sc) {
+    public void OnLinkToSpacecraft(VirtualVessel sc) {
       (Fields["StoredEnergy"].uiControlEditor as UI_ProgressBar).maxValue = battery.GetWattsCapacity();
       (Fields["StoredEnergy"].uiControlFlight as UI_ProgressBar).maxValue = battery.GetWattsCapacity();
     }
 
-    public override void OnSimulationUpdate(uint delta) {
+    public void OnSimulationUpdate(uint delta) {
       StoredEnergy = battery.GetWattsStored();
+    }
+
+    void IVirtualizedModule.OnUnlinkFromSpacecraft(VirtualVessel sc) {
+      throw new global::System.NotImplementedException();
     }
   }
 }

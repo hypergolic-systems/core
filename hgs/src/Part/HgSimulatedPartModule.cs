@@ -1,18 +1,21 @@
-using System;
-using Hgs.System;
+using Hgs.Virtual;
+
+using System.Collections.Generic;
 
 namespace Hgs.Part {
 
-  public abstract class HgSimulatedPartModule : PartModule {
+  public interface IVirtualizedModule {
 
-    public SimulatedPart simPart = null;
+    public PartModule module { get; }
 
-    public abstract SimulatedPart CreateSimulatedPart();
+    public List<Virtual.VirtualPart> virtualParts { get; set; }
 
-    public virtual void OnLinkToSpacecraft(Spacecraft sc) {}
+    public abstract void OnLinkToSpacecraft(VirtualVessel sc);
 
-    public virtual void OnUnlinkFromSpacecraft(Spacecraft sc) {}
+    public abstract void OnUnlinkFromSpacecraft(VirtualVessel sc);
 
-    public virtual void OnSimulationUpdate(uint delta) {}
+    public abstract void OnSimulationUpdate(uint delta);
+
+    public abstract void InitializeVirtualParts();
   }
 }

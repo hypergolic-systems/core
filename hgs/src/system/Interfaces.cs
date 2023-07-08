@@ -1,4 +1,4 @@
-namespace Hgs.System {
+namespace Hgs.Virtual {
 
   public interface ISimulated {
     void PreTick(uint seconds, Vessel vessel);
