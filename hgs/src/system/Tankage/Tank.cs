@@ -1,16 +1,6 @@
-using Hgs.Part;
-using System.Collections.Generic;
+using Hgs.Virtual;
 
-namespace Hgs.Virtual.Tanks {
-
-  public enum TankedSubstance {
-    Empty,
-    RocketFuel,
-    LiquidOxygen,
-    HypergolicFuel,
-    XenonGas,
-  }
-
+namespace Hgs.System.Tankage {
   public class Tank : VirtualPart {
 
     public TankedSubstance substance = TankedSubstance.Empty;
@@ -24,6 +14,8 @@ namespace Hgs.Virtual.Tanks {
     }
 
     public override void Save(ConfigNode node) {
+      node.AddValue("amount", this.amount);
+      node.AddValue("volume", this.volume);
       base.Save(node);
     }
   }

@@ -43,7 +43,7 @@ namespace Hgs.Virtual {
 
         // TODO: keep a cached list of vessels
         foreach (var vessel in FlightGlobals.Vessels) {
-          var spacecraftModule = vessel.GetComponent<HgSpacecraftVesselModule>();
+          var spacecraftModule = vessel.GetComponent<HgVirtualVesselModule>();
           if (spacecraftModule == null || spacecraftModule.craft == null) {
             continue;
           }

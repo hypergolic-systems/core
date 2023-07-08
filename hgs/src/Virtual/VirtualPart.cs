@@ -6,7 +6,7 @@ namespace Hgs.Virtual {
     public uint partId;
     public uint index;
 
-    public IVirtualizedModule liveModule;
+    public VirtualizedModule liveModule;
 
     public VirtualPart(uint partId, uint index) {
       this.partId = partId;

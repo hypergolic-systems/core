@@ -1,10 +1,11 @@
 using System;
+using Hgs.Virtual;
 
-namespace Hgs.Virtual.Electrical {
+namespace Hgs.System.Electrical {
 
-  public class Battery : VirtualPart, IStorage {
-    private int stored = 0;
-    private int capacity = 0;
+  public class Battery : VirtualPart, PowerStorage {
+    protected int stored = 0;
+    protected int capacity = 0;
     public Battery(uint partId, uint index) : base(partId, index) {}
 
     public override void Load(ConfigNode node) {
@@ -17,6 +18,10 @@ namespace Hgs.Virtual.Electrical {
       base.Save(node);
       node.SetValue("stored", stored.ToString(), true);
       node.SetValue("capacity", capacity.ToString(), true);
+    }
+
+    public ProducerKind Kind() {
+      return ProducerKind.Storage;
     }
 
     public Voltage GetVoltage() {
@@ -37,7 +42,7 @@ namespace Hgs.Virtual.Electrical {
       return draw;
     }
 
-    public void OnCalculateProduction(uint seconds, Vessel vessel) {
+    public void OnCalculateProduction(uint seconds, VirtualVessel vessel) {
       // Batteries don't need to calculate their production.
     }
 

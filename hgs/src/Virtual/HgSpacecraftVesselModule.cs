@@ -1,8 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Hgs.Part;
-using Hgs.Virtual.Electrical;
-using UnityEngine;
+using Hgs.System.Electrical;
 
 namespace Hgs.Virtual {
 
@@ -10,7 +9,7 @@ namespace Hgs.Virtual {
    * Provides the link between the simulated version of a `Spacecraft` with `SimulatedPart`s
    * and the game version of `Vessel`s.
    */
-  public class HgSpacecraftVesselModule : VesselModule {
+  public class HgVirtualVesselModule : VesselModule {
 
     /**
      * The `Spacecraft` associated with this vessel, or `null` if none exists.
@@ -29,7 +28,7 @@ namespace Hgs.Virtual {
       }
 
       // The parts for this vessel just became available, so look for any parts that we need to simulate.
-      foreach (var virtualModule in vessel.FindPartModulesImplementing<IVirtualizedModule>()) {
+      foreach (var virtualModule in vessel.FindPartModulesImplementing<VirtualizedModule>()) {
         var part = virtualModule.module.part;
 
         if (craft == null) {
@@ -59,7 +58,7 @@ namespace Hgs.Virtual {
         return;
       }
 
-      foreach (var module in vessel.FindPartModulesImplementing<IVirtualizedModule>()) {
+      foreach (var module in vessel.FindPartModulesImplementing<VirtualizedModule>()) {
         module.OnUnlinkFromSpacecraft(craft);
         foreach (var virtualPart in module.virtualParts) {
           virtualPart.liveModule = null;

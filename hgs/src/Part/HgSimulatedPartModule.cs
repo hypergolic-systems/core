@@ -4,11 +4,14 @@ using System.Collections.Generic;
 
 namespace Hgs.Part {
 
-  public interface IVirtualizedModule {
+  /**
+  * A `PartModule` which connects with one or more `VirtualPart`s.
+  */
+  public interface VirtualizedModule {
 
     public PartModule module { get; }
 
-    public List<Virtual.VirtualPart> virtualParts { get; set; }
+    public List<VirtualPart> virtualParts { get; set; }
 
     public abstract void OnLinkToSpacecraft(VirtualVessel sc);
 

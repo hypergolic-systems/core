@@ -1,4 +1,6 @@
-namespace Hgs.Virtual.Electrical {
+using Hgs.Virtual;
+
+namespace Hgs.System.Electrical {
   public enum Voltage {
     Low,
     High,
@@ -12,28 +14,24 @@ namespace Hgs.Virtual.Electrical {
 
   }
 
-  public interface IBus {
-    Voltage GetVoltage();
-
-    int TryDrawPower(int watts);
-  }
-  
-  public interface IConsumer {
+  public interface PowerConsumer {
     Voltage GetVoltage();
     void OnCalculateDemand(uint timeSeconds);
-    void OnPowerAvailable(IBus bus);
+    void OnPowerAvailable(Bus bus);
 
   }
   
-  public interface IProducer {
+  public interface PowerProducer {
     Voltage GetVoltage();
 
-    void OnCalculateProduction(uint timeSeconds, Vessel vessel);
+    ProducerKind Kind();
+
+    void OnCalculateProduction(uint timeSeconds, VirtualVessel vessel);
 
     int TryDrawPower(int watts);
   }
 
-  public interface IStorage : IProducer {
+  public interface PowerStorage : PowerProducer {
     // Total number of watts stored.
     int GetWattsStored();
 
@@ -42,6 +40,4 @@ namespace Hgs.Virtual.Electrical {
 
     void OnRecharge(int watts);
   }
-
-
 }

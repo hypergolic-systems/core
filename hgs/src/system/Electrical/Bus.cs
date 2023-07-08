@@ -1,29 +1,25 @@
 using System;
 using System.Collections.Generic;
-using System.Data.SqlTypes;
-using System.Diagnostics;
-using System.Linq;
-using System.Threading.Tasks;
 using Hgs.Virtual;
 
-namespace Hgs.Virtual.Electrical {
+namespace Hgs.System.Electrical {
 
-  public class Bus : IBus, ISimulated {
+  public class Bus : SimulatedSystem {
     public Voltage Voltage;
     public Voltage GetVoltage() {
       return this.Voltage;
     }
 
 
-    private List<IProducer> producers = new List<IProducer>();
-    private List<IConsumer> consumers = new List<IConsumer>();
-    private List<IStorage> storage = new List<IStorage>();
+    private List<PowerProducer> producers = new List<PowerProducer>();
+    private List<PowerConsumer> consumers = new List<PowerConsumer>();
+    private List<PowerStorage> storage = new List<PowerStorage>();
 
-    private Cursor<IProducer> cursorProducer;
+    private Cursor<PowerProducer> cursorProducer;
 
     public Bus(Voltage Voltage) {
       this.Voltage = Voltage;
-      cursorProducer = new Cursor<IProducer>(producers);
+      cursorProducer = new Cursor<PowerProducer>(producers);
     }
 
     public int TryDrawPower(int wattsNeeded) {
@@ -31,60 +27,56 @@ namespace Hgs.Virtual.Electrical {
     }
 
     public int TryDrawPower(int wattsNeeded, bool storageAllowed) {
-      Debugger.Break();
-      Console.WriteLine("Consumer has asked for {0}", wattsNeeded);
       int drawn = 0;
-      while (wattsNeeded > 0 && cursorProducer.Current != null && (storageAllowed || !(cursorProducer.Current is IStorage))) {
+      while (wattsNeeded > 0 && cursorProducer.Current != null && (storageAllowed || !(cursorProducer.Current is PowerStorage))) {
         int drawnFromThisProducer = cursorProducer.Current.TryDrawPower(wattsNeeded);
         if (drawnFromThisProducer == 0) {
           cursorProducer.Advance();
         }
         drawn += drawnFromThisProducer;
         wattsNeeded -= drawnFromThisProducer;
-        Console.WriteLine("Drew {0} from a producer, {1} so far", drawnFromThisProducer, drawn);
       }
       return drawn;
     }
 
-    public void AddProducer(IProducer producer) {
-      if (producer.GetVoltage() != Voltage)
-      {
+    public void AddProducer(PowerProducer producer) {
+      if (producer.GetVoltage() != Voltage) {
         throw new Exception("Wrong system voltage for producer");
       }
       producers.Add(producer);
     }
 
-    public void AddConsumer(IConsumer load) {
+    public void AddConsumer(PowerConsumer load) {
       this.consumers.Add(load);
     }
 
-    public void AddStorage(IStorage storage) {
+    public void AddStorage(PowerStorage storage) {
       this.producers.Add(storage);
       this.storage.Add(storage);
     }
 
-    public void PreTick(uint delta, Vessel vessel) {
-      foreach (IProducer producer in this.producers) {
+    public void PreTick(uint delta, VirtualVessel vessel) {
+      foreach (PowerProducer producer in this.producers) {
         producer.OnCalculateProduction(delta, vessel);
       }
-      foreach (IConsumer consumer in this.consumers) {
+      foreach (PowerConsumer consumer in this.consumers) {
         consumer.OnCalculateDemand(delta);
       }
       this.cursorProducer.Reset();
     }
 
-    public void Tick(uint delta, Vessel vessel) {
-      foreach (IConsumer consumer in this.consumers) {
+    public void Tick(uint delta, VirtualVessel vessel) {
+      foreach (PowerConsumer consumer in this.consumers) {
         consumer.OnPowerAvailable(this);
       }
 
-      if (this.cursorProducer.Current != null && !(this.cursorProducer.Current is IStorage)) {
+      if (this.cursorProducer.Current != null && !(this.cursorProducer.Current is PowerStorage)) {
         this.TryRechargeStorage();
       }
     }
 
     void TryRechargeStorage() {
-      foreach (IStorage storage in this.storage) {
+      foreach (PowerStorage storage in this.storage) {
         int wattsNeeded = storage.GetWattsCapacity() - storage.GetWattsStored();
         int rechargeWatts = TryDrawPower(wattsNeeded, false);
         if (rechargeWatts == 0) {
@@ -97,7 +89,7 @@ namespace Hgs.Virtual.Electrical {
       }
     }
 
-    public void PostTick(uint delta, Vessel vessel) {}
+    public void PostTick(uint delta, VirtualVessel vessel) {}
 
     class Cursor<T> where T: class {
       List<T> source;

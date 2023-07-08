@@ -1,14 +1,14 @@
-using Hgs.Virtual;
-using Hgs.Virtual.Electrical;
 using System.Collections.Generic;
+using Hgs.Virtual;
+using Hgs.System.Electrical;
 
 namespace Hgs.Part {
 
-  public class HgPartBattery : PartModule, IVirtualizedModule {
+  public class HgPartBattery : PartModule, VirtualizedModule {
 
     public PartModule module { get { return this; } }
 
-    public List<Virtual.VirtualPart> virtualParts { get; set; }
+    public List<VirtualPart> virtualParts { get; set; }
 
     [KSPField]
     public int capacity = 0;
@@ -41,7 +41,7 @@ namespace Hgs.Part {
       StoredEnergy = battery.GetWattsStored();
     }
 
-    void IVirtualizedModule.OnUnlinkFromSpacecraft(VirtualVessel sc) {
+    void VirtualizedModule.OnUnlinkFromSpacecraft(VirtualVessel sc) {
       throw new global::System.NotImplementedException();
     }
   }

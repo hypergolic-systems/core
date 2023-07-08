@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using KSP.UI.Screens;
 using UnityEngine;
