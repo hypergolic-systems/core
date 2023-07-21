@@ -22,7 +22,9 @@ jobs:
         dotnet-version: 6.0.x
     - name: Restore dependencies
       run: dotnet restore
-    - name: Build
+    - name: Build (Core)
       run: dotnet build core --no-restore
-    - name: Test
+    - name: Build (Tests)
+      run: dotnet build test --no-restore
+    - name: Tests
       run: dotnet test --no-build --verbosity normal
