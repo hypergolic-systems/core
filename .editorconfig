@@ -1,4 +1,7 @@
 root = true
 
 [*]
-curly_bracket_next_line = true
+indent_style = space
+indent_size = 4
+curly_bracket_next_line = false
+insert_final_newline = true

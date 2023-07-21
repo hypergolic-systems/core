@@ -1,7 +1,7 @@
 using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Hgs.System.Electrical;
-using Hgs.Virtual;
+using Hgs.Core.System.Electrical;
+using Hgs.Core.Virtual;
 
 namespace test;
 
@@ -23,7 +23,7 @@ class MockPowerProducer : PowerProducer {
     return this.Voltage;
   }
 
-  public void OnCalculateProduction(uint seconds, VirtualVessel vessel) {
+  public void OnCalculateProduction(uint seconds, CompositeSpacecraft vessel) {
     this.AvailableThisTick = this.OutputPerSecond * (int) seconds;
   }
 

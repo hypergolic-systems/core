@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
-using Hgs.Part;
-using Hgs.System.Electrical;
+using Hgs.Core.Virtual;
+using Hgs.Core.System.Electrical;
+using Hgs.Mod.Part;
 
 namespace Hgs.Virtual {
 
@@ -14,7 +15,7 @@ namespace Hgs.Virtual {
     /**
      * The `Spacecraft` associated with this vessel, or `null` if none exists.
      */
-    public VirtualVessel craft;
+    public CompositeSpacecraft craft;
 
     protected override void OnAwake() {
       base.OnAwake();
@@ -29,20 +30,20 @@ namespace Hgs.Virtual {
 
       // The parts for this vessel just became available, so look for any parts that we need to simulate.
       foreach (var virtualModule in vessel.FindPartModulesImplementing<VirtualizedModule>()) {
-        var part = virtualModule.module.part;
+        var part = (virtualModule.module as PartModule).part;
 
         if (craft == null) {
           // Lazily instantiate the `Spacecraft` when we do have parts to simulate.
-          craft = new VirtualVessel(vessel);
+          craft = CompositeSpacecraft.fromLiveVessel(vessel);
         }
 
-        if (!craft.virtualPartsMap.ContainsKey(part.persistentId)) {
-          // This is a never-before-seen part, so instantiate it from the source `HgSimulatedPartModule`.
-          virtualModule.InitializeVirtualParts();
-          craft.virtualPartsMap[part.persistentId] = virtualModule.virtualParts;
-        } else {
-          virtualModule.virtualParts = craft.virtualPartsMap[part.persistentId];
-        }
+        // if (!craft.virtualPartsMap.ContainsKey(part.persistentId)) {
+        //   // This is a never-before-seen part, so instantiate it from the source `HgSimulatedPartModule`.
+        //   virtualModule.InitializeVirtualParts();
+        //   craft.virtualPartsMap[part.persistentId] = virtualModule.virtualParts;
+        // } else {
+        //   virtualModule.virtualParts = craft.virtualPartsMap[part.persistentId];
+        // }
 
         // Link the `Vessel` and `Spacecraft` worlds.
         foreach (var virtualPart in virtualModule.virtualParts) {
@@ -76,7 +77,7 @@ namespace Hgs.Virtual {
       }
 
       // There are `SimulatedPart`s saved for this spacecraft, so instantiate them from the save file.
-      craft = new VirtualVessel(vessel);
+      craft = CompositeSpacecraft.fromLiveVessel(vessel);
       foreach (var moduleNode in node.GetNodes("VIRTUALIZED_MODULE")) {
         var partId = uint.Parse(node.GetValue("id"));
         var partNodes = moduleNode.GetNodes("PART");
@@ -90,28 +91,28 @@ namespace Hgs.Virtual {
           virtualParts.Add(virtualPart);
         }
 
-        craft.virtualPartsMap[partId] = virtualParts;
+        // craft.virtualPartsMap[partId] = virtualParts;
       }
     }
 
     protected override void OnSave(ConfigNode node) {
       base.OnSave(node);
 
-      if (craft == null || craft.virtualPartsMap.Count == 0) {
-        // Nothing to save.
-        return;
-      }
+      // if (craft == null || craft.virtualPartsMap.Count == 0) {
+      //   // Nothing to save.
+      //   return;
+      // }
 
-      foreach (var part in craft.virtualPartsMap) {
-        var moduleNode = node.AddNode("VIRTUALIZED_MODULE");
-        moduleNode.AddValue("id", part.Key.ToString());
-        foreach (var virtualPart in part.Value) {
-          var partNode = moduleNode.AddNode("PART");
-          partNode.AddValue("index", virtualPart.index.ToString());
-          partNode.AddValue("type", virtualPart.GetType().FullName);
-          virtualPart.Save(partNode);
-        }
-      }
+      // foreach (var part in craft.virtualPartsMap) {
+      //   var moduleNode = node.AddNode("VIRTUALIZED_MODULE");
+      //   moduleNode.AddValue("id", part.Key.ToString());
+      //   foreach (var virtualPart in part.Value) {
+      //     var partNode = moduleNode.AddNode("PART");
+      //     partNode.AddValue("index", virtualPart.index.ToString());
+      //     partNode.AddValue("type", virtualPart.GetType().FullName);
+      //     virtualPart.Save(partNode);
+      //   }
+      // }
     }
 
     /**

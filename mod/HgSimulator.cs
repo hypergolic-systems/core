@@ -8,6 +8,7 @@ namespace Hgs.Virtual {
     protected static uint MAX_TIME_DELTA = 3600;
 
     protected ulong LastUpdateTime = 0;
+    ConfigNode node;
 
     protected ulong WorldTime {
       get {

@@ -3,8 +3,13 @@
     <TargetFramework>net45</TargetFramework>
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>disable</Nullable>
-    <LangVersion>8</LangVersion>
+    <LangVersion>10</LangVersion>
   </PropertyGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\core\core.csproj" />
+  </ItemGroup>
+  
   <ItemGroup>
     <Reference Include="Assembly-CSharp">
       <HintPath>../dll/Assembly-CSharp.dll</HintPath>

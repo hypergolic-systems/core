@@ -3,9 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30114.105
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hgs", "Hgs\Hgs.csproj", "{50B64BEE-E9D1-461B-9022-1E06F3B0EA20}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "core", "core\core.csproj", "{50B64BEE-E9D1-461B-9022-1E06F3B0EA20}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "test", "test\test.csproj", "{9AB572DE-19AA-46DF-8886-8A7ED58CE0E6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "mod", "mod\mod.csproj", "{FD39DB4B-E585-4819-8449-20011D6E8005}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -24,5 +26,9 @@ Global
 		{9AB572DE-19AA-46DF-8886-8A7ED58CE0E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9AB572DE-19AA-46DF-8886-8A7ED58CE0E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9AB572DE-19AA-46DF-8886-8A7ED58CE0E6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FD39DB4B-E585-4819-8449-20011D6E8005}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FD39DB4B-E585-4819-8449-20011D6E8005}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FD39DB4B-E585-4819-8449-20011D6E8005}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FD39DB4B-E585-4819-8449-20011D6E8005}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
