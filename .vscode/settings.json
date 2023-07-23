@@ -1,5 +1,10 @@
 {
   "omnisharp.useModernNet": true,
-  "omnisharp.enableImportCompletion": true,
-  "omnisharp.organizeImportsOnFormat": true
+  "omnisharp.organizeImportsOnFormat": true,
+  "dotnet.completion.showCompletionItemsFromUnimportedNamespaces": true,
+  "dotnet.defaultSolution": "hypergolic-systems.sln",
+  "omnisharp.useEditorFormattingSettings": false,
+  "csharp.format.enable": true,
+  "omnisharp.loggingLevel": "debug",
+  "csharp.suppressProjectJsonWarning": false
 }

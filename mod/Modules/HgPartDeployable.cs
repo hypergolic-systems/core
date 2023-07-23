@@ -1,4 +1,4 @@
-namespace Hgs.Mod.Part;
+namespace Hgs.Mod.Modules;
 
 public class HgPartDeployable : ModuleDeployablePart {
 }

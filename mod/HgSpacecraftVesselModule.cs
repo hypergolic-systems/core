@@ -2,20 +2,19 @@ using System;
 using System.Collections.Generic;
 using Hgs.Core.Virtual;
 using Hgs.Core.System.Electrical;
-using Hgs.Mod.Part;
 
-namespace Hgs.Virtual {
+namespace Hgs.Mod.Virtual {
 
   /**
    * Provides the link between the simulated version of a `Spacecraft` with `SimulatedPart`s
    * and the game version of `Vessel`s.
    */
-  public class HgVirtualVesselModule : VesselModule {
+  public class HgSpacecraftVesselModule : VesselModule {
 
     /**
      * The `Spacecraft` associated with this vessel, or `null` if none exists.
      */
-    public CompositeSpacecraft craft;
+    public CompositeSpacecraft composite;
 
     protected override void OnAwake() {
       base.OnAwake();
@@ -28,13 +27,16 @@ namespace Hgs.Virtual {
         return;
       }
 
+      // Validate that the CompositeSpacecraft shape matches the attached vessel.
+      // this.reconcileVesselShape();
+
       // The parts for this vessel just became available, so look for any parts that we need to simulate.
       foreach (var virtualModule in vessel.FindPartModulesImplementing<VirtualizedModule>()) {
         var part = (virtualModule.module as PartModule).part;
 
-        if (craft == null) {
+        if (composite == null) {
           // Lazily instantiate the `Spacecraft` when we do have parts to simulate.
-          craft = CompositeSpacecraft.fromLiveVessel(vessel);
+          // composite = (vessel);
         }
 
         // if (!craft.virtualPartsMap.ContainsKey(part.persistentId)) {
@@ -50,17 +52,17 @@ namespace Hgs.Virtual {
           virtualPart.liveModule = virtualModule;
         }
 
-        virtualModule.OnLinkToSpacecraft(craft);
+        virtualModule.OnLinkToSpacecraft(composite);
       }
     }
 
     public override void OnUnloadVessel() {
-      if (vessel == null || vessel.parts == null || craft == null) {
+      if (vessel == null || vessel.parts == null || composite == null) {
         return;
       }
 
       foreach (var module in vessel.FindPartModulesImplementing<VirtualizedModule>()) {
-        module.OnUnlinkFromSpacecraft(craft);
+        module.OnUnlinkFromSpacecraft(composite);
         foreach (var virtualPart in module.virtualParts) {
           virtualPart.liveModule = null;
         }
@@ -77,7 +79,7 @@ namespace Hgs.Virtual {
       }
 
       // There are `SimulatedPart`s saved for this spacecraft, so instantiate them from the save file.
-      craft = CompositeSpacecraft.fromLiveVessel(vessel);
+      // composite = CompositeSpacecraft.fromLiveVessel(vessel);
       foreach (var moduleNode in node.GetNodes("VIRTUALIZED_MODULE")) {
         var partId = uint.Parse(node.GetValue("id"));
         var partNodes = moduleNode.GetNodes("PART");
@@ -131,6 +133,11 @@ namespace Hgs.Virtual {
         part.Load(node);
       }
       return part;
+    }
+
+
+    private bool craftMatchesStageFromPart(Segment segment, Part part, Part parent) {
+      return false;
     }
   }
 }

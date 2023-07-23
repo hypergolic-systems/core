@@ -1,10 +1,11 @@
 using System.Collections.Generic;
-using Hgs.Core.Virtual;
 using Hgs.Core.System.Electrical;
+using Hgs.Core.Virtual;
 
-namespace Hgs.Mod.Part;
+namespace Hgs.Mod.Modules;
 
-public class HgPartBattery : PartModule, VirtualizedModule {
+public class HgPartBattery : PartModule, VirtualizedModule
+{
 
   public object module { get { return this; } }
 
@@ -19,29 +20,35 @@ public class HgPartBattery : PartModule, VirtualizedModule {
   ]
   public float StoredEnergy = 0;
 
-  protected Battery battery {
-    get {
+  protected Battery battery
+  {
+    get
+    {
       return this.virtualParts[0] as Battery;
     }
   }
 
-  public void InitializeVirtualParts() {
+  public void InitializeVirtualParts()
+  {
     var battery = new Battery(this.part.persistentId, 0);
     battery.InitializeCapacity(capacity);
     this.virtualParts = new List<VirtualPart>(1);
     this.virtualParts.Add(battery);
   }
 
-  public void OnLinkToSpacecraft(CompositeSpacecraft sc) {
+  public void OnLinkToSpacecraft(CompositeSpacecraft sc)
+  {
     (Fields["StoredEnergy"].uiControlEditor as UI_ProgressBar).maxValue = battery.GetWattsCapacity();
     (Fields["StoredEnergy"].uiControlFlight as UI_ProgressBar).maxValue = battery.GetWattsCapacity();
   }
 
-  public void OnSimulationUpdate(uint delta) {
+  public void OnSimulationUpdate(uint delta)
+  {
     StoredEnergy = battery.GetWattsStored();
   }
 
-  public void OnUnlinkFromSpacecraft(CompositeSpacecraft sc) {
+  public void OnUnlinkFromSpacecraft(CompositeSpacecraft sc)
+  {
     throw new global::System.NotImplementedException();
   }
 }

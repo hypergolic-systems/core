@@ -20,3 +20,10 @@ public interface VirtualizedModule {
 
   public abstract void InitializeVirtualParts();
 }
+
+public interface SegmentDivider {
+
+  public object Part { get; }
+  public object OtherSide { get; }
+  public string DividerStyle { get; }
+}
