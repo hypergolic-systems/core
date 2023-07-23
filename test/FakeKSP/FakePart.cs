@@ -22,4 +22,9 @@ public class FakePart {
   public List<T> FindModulesImplementing<T>() where T : class {
     return modules.OfType<T>().ToList();
   }
+
+  public void AddModule(FakePartModule module) {
+    module.part = this;
+    modules.Add(module);
+  }
 }

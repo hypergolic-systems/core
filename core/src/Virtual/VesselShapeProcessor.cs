@@ -23,7 +23,7 @@ public abstract class VesselShapeProcessor {
     spacecraft.segments.Add(rootSegment);
 
     var rootPart = Adapter.Vessel_rootPart(vessel);
-    this.IngestPartIntoSegmentTree(composite, rootSegment, rootPart, rootPart);
+    this.IngestPartIntoSegmentTree(composite, spacecraft, rootSegment, rootPart, rootPart);
     return composite;
   }
 
@@ -74,12 +74,15 @@ public abstract class VesselShapeProcessor {
     return true;
   }
 
-  protected void IngestPartIntoSegmentTree(CompositeSpacecraft composite, Segment segment, object part, object fromPart) {
+  protected void IngestPartIntoSegmentTree(CompositeSpacecraft composite, Spacecraft craft, Segment segment, object part, object fromPart) {
     var divider = Adapter.Part_FindModuleImplementing<SegmentDivider>(part);
     var segmentForThisPart = segment;
     var segmentForChildParts = segment;
     if (divider != null) {
       var newSegment = new Segment();
+      newSegment.craft = craft;
+      craft.segments.Add(newSegment);
+      
       var link = new SegmentLink();
       link.sideA = segment;
       link.sideB = newSegment;
@@ -109,14 +112,14 @@ public abstract class VesselShapeProcessor {
     // So we need to consider both up and down the tree.
     var parent = Adapter.Part_parent(part);
     if (parent != null && parent != fromPart) {
-      this.IngestPartIntoSegmentTree(composite, segmentForChildParts, parent, part);
+      this.IngestPartIntoSegmentTree(composite, craft, segmentForChildParts, parent, part);
     }
 
     foreach (var childPart in Adapter.Part_children(part)) {
       if (childPart == fromPart) {
         continue;
       }
-      this.IngestPartIntoSegmentTree(composite, segmentForChildParts, childPart, part);
+      this.IngestPartIntoSegmentTree(composite, craft, segmentForChildParts, childPart, part);
     }
   }
 

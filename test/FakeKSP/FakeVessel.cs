@@ -19,4 +19,11 @@ public class FakeVessel {
   public List<T> FindPartModulesImplementing<T>() where T : class {
     return parts.SelectMany(part => part.modules.OfType<T>()).ToList();
   }
+
+  public FakePart AddPart(FakePart parent) {
+    var part = new FakePart(this.nextPersistentId++, parent);
+    this.parts.Add(part);
+    this.partsById.Add(part.persistentId, part);
+    return part;
+  }
 }
