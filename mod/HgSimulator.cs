@@ -1,4 +1,5 @@
 using System;
+using Hgs.Core.Virtual;
 using UnityEngine;
 
 namespace Hgs.Mod.Virtual;
@@ -8,7 +9,6 @@ public class HgSimulator : MonoBehaviour {
   protected static uint MAX_TIME_DELTA = 3600;
 
   protected ulong LastUpdateTime = 0;
-  ConfigNode node;
 
   protected ulong WorldTime {
     get {
@@ -22,6 +22,7 @@ public class HgSimulator : MonoBehaviour {
 
   public void Awake() {
     GameEvents.onGameStatePostLoad.Add(OnGameLoaded);
+    GameEvents.onVesselWasModified.Add(OnVesselWasModified);
   }
 
   public void FixedUpdate() {
@@ -44,12 +45,12 @@ public class HgSimulator : MonoBehaviour {
 
       // TODO: keep a cached list of vessels
       foreach (var vessel in FlightGlobals.Vessels) {
-        var spacecraftModule = vessel.GetComponent<HgSpacecraftVesselModule>();
-        if (spacecraftModule == null || spacecraftModule.composite == null) {
+        var composite = SpacecraftManager.Instance.GetSpacecraft(vessel);
+        if (composite == null) {
           continue;
         }
 
-        spacecraftModule.composite.Tick(delta);
+        composite.Tick(delta);
       }
     }
 
@@ -58,6 +59,11 @@ public class HgSimulator : MonoBehaviour {
 
   public void OnGameLoaded(ConfigNode _) {
     LastUpdateTime = 0;
+  }
+
+  public void OnVesselWasModified(Vessel vessel) {
+    // TODO: dedicated method maybe?
+    SpacecraftManager.Instance.OnLoadVessel(vessel);
   }
 }
 

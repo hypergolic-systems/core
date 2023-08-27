@@ -2,14 +2,11 @@ using Hgs.Core.Virtual;
 
 namespace Hgs.Core.System.Electrical;
 
-public class SolarPanel : VirtualPart, PowerProducer {
+public class SolarPanel : VirtualComponent, PowerProducer {
   // TODO: this is earth's sun (64E6)
   const double H_SUN = 64000000;
 
   float solarIrradiance = 0;
-
-
-  public SolarPanel(uint partId, uint index) : base(partId, index) {}
 
   public Voltage GetVoltage() {
     return Voltage.Low;

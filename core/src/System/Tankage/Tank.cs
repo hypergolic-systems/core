@@ -2,13 +2,11 @@ using Hgs.Core.Virtual;
 
 namespace Hgs.Core.System.Tankage;
 
-public class Tank : VirtualPart {
+public class Tank : VirtualComponent {
 
   private TankedSubstance substance = TankedSubstance.Empty;
   private float amount = 0;
   private float volume = 0;
-
-  public Tank(uint partId, uint index) : base(partId, index) {}
 
   public TankedSubstance GetSubstance() {
     return this.substance;

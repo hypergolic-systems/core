@@ -4,10 +4,9 @@ using Hgs.Core.Virtual;
 
 namespace Hgs.Core.System.Electrical;
 
-public class Battery : VirtualPart, PowerStorage {
+public class Battery : VirtualComponent, PowerStorage {
   protected int stored = 0;
   protected int capacity = 0;
-  public Battery(uint partId, uint index) : base(partId, index) {}
 
   public override void Load(object node) {
     base.Load(node);

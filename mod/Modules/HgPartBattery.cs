@@ -1,16 +1,12 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using Hgs.Core.System.Electrical;
 using Hgs.Core.Virtual;
 
 namespace Hgs.Mod.Modules;
 
-public class HgPartBattery : PartModule, VirtualizedModule
-{
-
-  public object module { get { return this; } }
-
-  public List<VirtualPart> virtualParts { get; set; }
-
+public class HgPartBattery : HgPartBase {
   [KSPField]
   public int capacity = 0;
 
@@ -20,35 +16,31 @@ public class HgPartBattery : PartModule, VirtualizedModule
   ]
   public float StoredEnergy = 0;
 
-  protected Battery battery
-  {
-    get
-    {
-      return this.virtualParts[0] as Battery;
-    }
-  }
+  public Battery battery;
 
-  public void InitializeVirtualParts()
-  {
-    var battery = new Battery(this.part.persistentId, 0);
+  public override void InitializeComponents(SpacecraftPart part) {
+    var battery = new Battery {
+      partId = this.part.persistentId,
+    };
     battery.InitializeCapacity(capacity);
-    this.virtualParts = new List<VirtualPart>(1);
-    this.virtualParts.Add(battery);
+    part.AddComponent(battery);
   }
 
-  public void OnLinkToSpacecraft(CompositeSpacecraft sc)
-  {
+  public override void OnLinkToSpacecraft(CompositeSpacecraft sc) {
+    this.battery = this.spacecraftPart.components.OfType<Battery>().First();
     (Fields["StoredEnergy"].uiControlEditor as UI_ProgressBar).maxValue = battery.GetWattsCapacity();
     (Fields["StoredEnergy"].uiControlFlight as UI_ProgressBar).maxValue = battery.GetWattsCapacity();
   }
 
-  public void OnSimulationUpdate(uint delta)
-  {
+  public override void OnSimulationUpdate(uint delta) {
     StoredEnergy = battery.GetWattsStored();
   }
 
-  public void OnUnlinkFromSpacecraft(CompositeSpacecraft sc)
-  {
+  public override void OnUnlinkFromSpacecraft(CompositeSpacecraft sc) {
     throw new global::System.NotImplementedException();
+  }
+
+  public override bool OwnsComponent(VirtualComponent component) {
+    return component is Battery;
   }
 }

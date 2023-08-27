@@ -28,6 +28,10 @@ public class KspAdapter : IAdapter {
     return (vessel as Vessel).rootPart;
   }
 
+  public uint Vessel_persistentId(object vessel) {
+    return (vessel as Vessel).persistentId;
+  }
+
   public T Part_FindModuleImplementing<T>(object part) where T : class {
     return (part as Part).FindModuleImplementing<T>();
   }

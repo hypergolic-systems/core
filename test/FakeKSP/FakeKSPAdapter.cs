@@ -48,4 +48,8 @@ public class FakeKSPAdapter : IAdapter
   public List<T> Vessel_FindPartModulesImplementing<T>(object vessel) where T : class {
     return (vessel as FakeVessel).FindPartModulesImplementing<T>();
   }
+
+  uint IAdapter.Vessel_persistentId(object vessel) {
+    return (vessel as FakeVessel).persistentId;
+  }
 }

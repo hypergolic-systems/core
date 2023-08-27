@@ -1,16 +1,13 @@
 
+using System;
+
 namespace Hgs.Core.Virtual;
 
-public abstract class VirtualPart {
+public abstract class VirtualComponent {
   public uint partId;
-  public uint index;
+  public int index;
 
-  public VirtualizedModule liveModule;
-
-  public VirtualPart(uint partId, uint index) {
-    this.partId = partId;
-    this.index = index;
-  }
+  public SimulatedModule liveModule;
 
   public virtual void Save(object node) {}
 

@@ -2,18 +2,11 @@ namespace Hgs.Mod.Modules;
 
 public class HgSegmentDividerModule : PartModule {
 
-  /**
-    * Valid styles are 'decoupler' and 'dockingPort'.
-    *
-    * 'decoupler' is the default, and indicates that this part is the start of the child segment.
-    * 'dockingPort' indicates that this part is the end of the parent segment, and the connected
-    * part is in the child segment. Note that the connected part may also have a
-    * HgSegmentDividerModule with style='dockingPort'.
-    */
+
   [KSPField]
   public string style = "decoupler";
 
-  public Part OtherSide {
+  public Part ForeignPart {
     get {
       if (this.style == "decoupler") {
         return this.part.parent;

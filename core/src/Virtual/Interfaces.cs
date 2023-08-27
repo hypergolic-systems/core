@@ -5,3 +5,13 @@ public interface SimulatedSystem {
   void Tick(uint seconds, CompositeSpacecraft vessel);
   void PostTick(uint seconds, CompositeSpacecraft vessel);
 }
+
+public interface SegmentDivider {
+
+  public object Part { get; }
+
+  /// <summary>
+  /// 
+  /// </summary>
+  public object ForeignPart { get; }
+}

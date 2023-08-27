@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace Hgs.Core;
@@ -47,6 +48,10 @@ public class Adapter {
   public static List<T> Vessel_FindPartModulesImplementing<T>(object vessel) where T: class {
     return Instance.Vessel_FindPartModulesImplementing<T>(vessel);
   }
+
+  public static uint Vessel_persistentId(object vessel) {
+    return Instance.Vessel_persistentId(vessel);
+  }
 }
 
 public interface IAdapter {
@@ -60,6 +65,8 @@ public interface IAdapter {
   void ConfigNode_AddNode(object nodeObj, object childNodeObj);
 
   object Vessel_rootPart(object vessel);
+
+  uint Vessel_persistentId(Object vessel);
 
   public T Part_FindModuleImplementing<T>(object part) where T : class;
 
