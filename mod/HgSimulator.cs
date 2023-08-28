@@ -50,7 +50,7 @@ public class HgSimulator : MonoBehaviour {
           continue;
         }
 
-        composite.Tick(delta);
+        composite.simulator.Simulate(delta);
       }
     }
 

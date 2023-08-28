@@ -33,7 +33,8 @@ public class SpacecraftManager {
     }
 
     var composite = composites[id];
-    this.RefreshStructureFromVessel(composite, vessel);
+    composite.Clear();
+    this.LoadStructureFromVessel(composite, vessel);
 
     // Keep track of which parts were here from the start, so we know which ones didn't match any
     // `SimulatedModule`s and should be removed.
@@ -58,7 +59,7 @@ public class SpacecraftManager {
         // This module owns no components on this part, so see if it wants to create some.
         module.InitializeComponents(part);
       }
-
+ 
       module.OnLinkToSpacecraft(composite);
       existingSpacecraftParts.Remove(partId);
     }
@@ -67,6 +68,8 @@ public class SpacecraftManager {
       // These parts didn't have corresponding physical parts. Remove them from the spacecraft.
       composite.partMap.Remove(oldPartId);
     }
+
+    composite.InitializeSimulation();
 
     return composite;
   }
@@ -95,11 +98,46 @@ public class SpacecraftManager {
     this.LoadStructureFromConfig(composite, node);
   }
 
+  protected void LoadStructureFromConfig(CompositeSpacecraft composite, object node) {
+    foreach (var craftNode in Adapter.ConfigNode_GetNodes(node, "SPACECRAFT")) {
+      var craft = new Spacecraft {
+        composite = composite,
+      };
+      composite.spacecraft.Add(craft);
+
+      foreach (var segmentNode in Adapter.ConfigNode_GetNodes(craftNode, "SEGMENT")) {
+        var definingPart = uint.Parse(Adapter.ConfigNode_Get(segmentNode, "definingPart"));
+        var segment = new Segment(craft, definingPart);
+        craft.segmentsByDefiningPart[definingPart] = segment;
+
+        foreach (var partNode in Adapter.ConfigNode_GetNodes(segment, "PART")) {
+          var part = new SpacecraftPart {
+            id = uint.Parse(Adapter.ConfigNode_Get(partNode, "id")),
+          };
+          foreach (var componentNode in Adapter.ConfigNode_GetNodes(partNode, "COMPONENT")) {
+            var typeString = Adapter.ConfigNode_Get(partNode, "type");
+            if (!componentTypes.ContainsKey(typeString)) {
+              throw new Exception(string.Format("Unknown VirtualComponent type: {0}", typeString));
+            }
+
+            var component = (VirtualComponent) Activator.CreateInstance(componentTypes[typeString]);
+            component.partId = part.id;
+            component.index = int.Parse(Adapter.ConfigNode_Get(partNode, "index"));
+
+            segment.parts[part.id] = part;
+            composite.partMap[part.id] =  part;
+          }
+        }
+      }
+    }
+    composite.InitializeSimulation();
+  }
+
   /// <summary>
   /// Extracts the structure of a `CompositeSpacecraft` from the live parts.
   /// </summary>
-  protected void RefreshStructureFromVessel(CompositeSpacecraft composite, object vessel) {
-    composite.ClearStructure();
+  protected void LoadStructureFromVessel(CompositeSpacecraft composite, object vessel) {
+    composite.Clear();
     var rootCraft = new Spacecraft();
     composite.spacecraft.Add(rootCraft);
   
@@ -180,41 +218,6 @@ public class SpacecraftManager {
       // For example, a decoupler which will detach from `fromPart` when it's decoupled.
       segmentForThisPart = segmentForChildParts = new Segment(composite, thisPartId);
       composite.segmentsByDefiningPart.Add(segmentForChildParts.definingPart, segmentForChildParts);
-    }
-  }
-
-  protected void LoadStructureFromConfig(CompositeSpacecraft composite, object node) {
-    composite.ClearStructure();
-    foreach (var craftNode in Adapter.ConfigNode_GetNodes(node, "SPACECRAFT")) {
-      var craft = new Spacecraft {
-        composite = composite,
-      };
-      composite.spacecraft.Add(craft);
-
-      foreach (var segmentNode in Adapter.ConfigNode_GetNodes(craftNode, "SEGMENT")) {
-        var definingPart = uint.Parse(Adapter.ConfigNode_Get(segmentNode, "definingPart"));
-        var segment = new Segment(craft, definingPart);
-        craft.segmentsByDefiningPart[definingPart] = segment;
-
-        foreach (var partNode in Adapter.ConfigNode_GetNodes(segment, "PART")) {
-          var part = new SpacecraftPart {
-            id = uint.Parse(Adapter.ConfigNode_Get(partNode, "id")),
-          };
-          foreach (var componentNode in Adapter.ConfigNode_GetNodes(partNode, "COMPONENT")) {
-            var typeString = Adapter.ConfigNode_Get(partNode, "type");
-            if (!componentTypes.ContainsKey(typeString)) {
-              throw new Exception(string.Format("Unknown VirtualComponent type: {0}", typeString));
-            }
-
-            var component = (VirtualComponent) Activator.CreateInstance(componentTypes[typeString]);
-            component.partId = part.id;
-            component.index = int.Parse(Adapter.ConfigNode_Get(partNode, "index"));
-
-            segment.parts[part.id] = part;
-            composite.partMap[part.id] =  part;
-          }
-        }
-      }
     }
   }
 }

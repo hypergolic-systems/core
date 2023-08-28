@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Hgs.Core.System.Electrical;
+using Hgs.Core.System.Electrical.Components;
 using Hgs.Core.Virtual;
 
 namespace Hgs.Mod.Modules;
@@ -28,16 +28,15 @@ public class HgPartBattery : HgPartBase {
 
   public override void OnLinkToSpacecraft(CompositeSpacecraft sc) {
     this.battery = this.spacecraftPart.components.OfType<Battery>().First();
-    (Fields["StoredEnergy"].uiControlEditor as UI_ProgressBar).maxValue = battery.GetWattsCapacity();
-    (Fields["StoredEnergy"].uiControlFlight as UI_ProgressBar).maxValue = battery.GetWattsCapacity();
+    (Fields["StoredEnergy"].uiControlEditor as UI_ProgressBar).maxValue = battery.Capacity;
+    (Fields["StoredEnergy"].uiControlFlight as UI_ProgressBar).maxValue = battery.Capacity;
   }
 
   public override void OnSimulationUpdate(uint delta) {
-    StoredEnergy = battery.GetWattsStored();
+    StoredEnergy = battery.Stored;
   }
 
   public override void OnUnlinkFromSpacecraft(CompositeSpacecraft sc) {
-    throw new global::System.NotImplementedException();
   }
 
   public override bool OwnsComponent(VirtualComponent component) {

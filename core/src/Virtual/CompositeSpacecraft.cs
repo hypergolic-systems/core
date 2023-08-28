@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Security.Policy;
 using Hgs.Core.System.Electrical;
 
 namespace Hgs.Core.Virtual;
@@ -40,6 +41,7 @@ public class CompositeSpacecraft {
   public Dictionary<uint, SpacecraftPart> partMap = new();
   public Dictionary<uint, Segment> segmentsByPart = new();
   public Segment rootSegment;
+  public Simulator simulator;
 
   public object liveVessel = null;
 
@@ -47,13 +49,13 @@ public class CompositeSpacecraft {
     this.id = vesselId;
   }
 
-  public void ClearStructure() {
+  public void Clear() {
     this.spacecraft.Clear();
     this.segmentsByPart.Clear();
+    this.simulator = null;
   }
 
-  public void Tick(uint seconds) {}
-
-  public void PostTick(uint seconds) {}
+  public void InitializeSimulation() {
+    this.simulator = new Simulator(this);
+  }
 }
-

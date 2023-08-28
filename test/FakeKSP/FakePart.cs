@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Hgs.Core.Virtual;
 
 namespace Hgs.Test.FakeKSP;
 
@@ -21,6 +22,10 @@ public class FakePart {
 
   public List<T> FindModulesImplementing<T>() where T : class {
     return modules.OfType<T>().ToList();
+  }
+
+  public T GetSimulatedComponent<T>(CompositeSpacecraft composite) where T: class {
+    return composite.partMap[persistentId].components.OfType<T>().First();
   }
 
   public void AddModule(FakePartModule module) {
