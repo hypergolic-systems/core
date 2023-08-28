@@ -1,4 +1,5 @@
 using System;
+using Hgs.Core;
 using Hgs.Core.Virtual;
 using UnityEngine;
 
@@ -18,6 +19,7 @@ public class HgSimulator : MonoBehaviour {
 
   public HgSimulator() {
     DontDestroyOnLoad(this);
+    Adapter.Instance = new KspAdapter();
   }
 
   public void Awake() {
@@ -50,7 +52,11 @@ public class HgSimulator : MonoBehaviour {
           continue;
         }
 
-        composite.simulator.Simulate(delta);
+        try {
+          composite.simulator.Simulate(delta);
+        } catch (Exception e) {
+          Debug.LogError("Exception while simulating spacecraft: " + e.Message + "\n" + e.StackTrace.ToString());
+        }
       }
     }
 
@@ -63,7 +69,7 @@ public class HgSimulator : MonoBehaviour {
 
   public void OnVesselWasModified(Vessel vessel) {
     // TODO: dedicated method maybe?
-    SpacecraftManager.Instance.OnLoadVessel(vessel);
+    // SpacecraftManager.Instance.OnLoadVessel(vessel);
   }
 }
 

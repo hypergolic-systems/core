@@ -1,8 +1,5 @@
-using System;
-using System.Collections.Generic;
+
 using Hgs.Core.Virtual;
-using Hgs.Core.System.Electrical;
-using System.Runtime.InteropServices;
 
 namespace Hgs.Mod.Virtual {
 
@@ -26,6 +23,7 @@ namespace Hgs.Mod.Virtual {
       if (vessel == null || vessel.parts == null) {
         return;
       }
+
       SpacecraftManager.Instance.OnLoadVessel(vessel);
     }
 

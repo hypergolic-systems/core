@@ -1,11 +1,12 @@
-dotnet build hgs
+dotnet build mod
 
-KSP=~/KSP_osx/GameData/HypergolSystems
+KSP=~/KSP_osx/GameData/HypergolicSystems
 
 rm -rf $KSP
 
 mkdir $KSP
 mkdir $KSP/Plugins
 
-cp ./hgs/bin/Debug/net45/hgs.dll $KSP/Plugins/HypergolSystems.dll
-cp -rv ./hgs/src/config/* $KSP/
+cp ./core/bin/Debug/net45/core.dll $KSP/Plugins/Hgs.Core.dll
+cp ./mod/bin/Debug/net45/mod.dll $KSP/Plugins/Hgs.Mod.dll
+cp -rv ./mod/config/* $KSP/

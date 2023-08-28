@@ -12,6 +12,10 @@ public class KspAdapter : IAdapter {
     (nodeObj as ConfigNode).SetValue(name, value, true);
   }
 
+  public object ConfigNode_GetNode(object nodeObj, string name) {
+    return (nodeObj as ConfigNode).GetNode(name);
+  }
+
   public object[] ConfigNode_GetNodes(object nodeObj, string name) {
     return (nodeObj as ConfigNode).GetNodes(name);
   }

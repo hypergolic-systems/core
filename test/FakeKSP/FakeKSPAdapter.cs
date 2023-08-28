@@ -17,6 +17,11 @@ public class FakeKSPAdapter : IAdapter
     throw new System.NotImplementedException();
   }
 
+  public object ConfigNode_GetNode(object nodeObj, string name) {
+    throw new System.NotImplementedException();
+  }
+
+
   public object[] ConfigNode_GetNodes(object nodeObj, string name) {
     throw new System.NotImplementedException();
   }

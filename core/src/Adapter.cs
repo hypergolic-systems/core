@@ -13,6 +13,10 @@ public class Adapter {
     Instance.ConfigNode_Set(nodeObj, name, value);
   }
 
+  public static object ConfigNode_GetNode(object nodeObj, string name) {
+    return Instance.ConfigNode_GetNode(nodeObj, name);
+  }
+
   public static object[] ConfigNode_GetNodes(object nodeObj, string name) {
     return Instance.ConfigNode_GetNodes(nodeObj, name);
   }
@@ -57,6 +61,8 @@ public class Adapter {
 public interface IAdapter {
   string ConfigNode_Get(object nodeObj, string name);
   void ConfigNode_Set(object nodeObj, string name, string value);
+
+  object ConfigNode_GetNode(object nodeObj, string name);
 
   object[] ConfigNode_GetNodes(object nodeObj, string name);
 

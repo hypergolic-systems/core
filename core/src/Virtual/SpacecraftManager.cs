@@ -21,7 +21,8 @@ public class SpacecraftManager {
   }
 
   public CompositeSpacecraft GetSpacecraft(object vessel) {
-    return composites[Adapter.Vessel_persistentId(vessel)];
+    var vesselId = Adapter.Vessel_persistentId(vessel);
+    return composites.ContainsKey(vesselId) ? composites[vesselId] : null;
   }
 
   public CompositeSpacecraft OnLoadVessel(object vessel) {
@@ -59,6 +60,13 @@ public class SpacecraftManager {
         // This module owns no components on this part, so see if it wants to create some.
         module.InitializeComponents(part);
       }
+
+      // Associate the module with the components it owns.
+      foreach (var component in part.components) {
+        if (module.OwnsComponent(component)) {
+          component.liveModule = module;
+        }
+      }
  
       module.OnLinkToSpacecraft(composite);
       existingSpacecraftParts.Remove(partId);
@@ -91,11 +99,17 @@ public class SpacecraftManager {
   }
 
   public void OnLoadVesselConfig(object node) {
-    var id = uint.Parse(Adapter.ConfigNode_Get(node, "id"));
+    var compositeNode = Adapter.ConfigNode_Get(node, "HGS_COMPOSITE");
+    if (compositeNode == null) {
+      // There is no serialized CompositeSpacecraft associated with this vessel (yet).
+      return;
+    }
+
+    var id = uint.Parse(Adapter.ConfigNode_Get(compositeNode, "id"));
     var composite = new CompositeSpacecraft(id);
     composites[id] = composite;
 
-    this.LoadStructureFromConfig(composite, node);
+    this.LoadStructureFromConfig(composite, compositeNode);
   }
 
   protected void LoadStructureFromConfig(CompositeSpacecraft composite, object node) {

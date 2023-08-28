@@ -1,8 +1,7 @@
-using System;
-using System.Collections.Generic;
 using System.Linq;
 using Hgs.Core.System.Electrical.Components;
 using Hgs.Core.Virtual;
+using UnityEngine;
 
 namespace Hgs.Mod.Modules;
 
@@ -16,7 +15,7 @@ public class HgPartBattery : HgPartBase {
   ]
   public float StoredEnergy = 0;
 
-  public Battery battery;
+  public Battery battery = null;
 
   public override void InitializeComponents(SpacecraftPart part) {
     var battery = new Battery {
@@ -33,6 +32,7 @@ public class HgPartBattery : HgPartBase {
   }
 
   public override void OnSimulationUpdate(uint delta) {
+    Debug.Log("HgPartBattery.OnSimulationUpdate with " + battery.Stored + "/" + battery.Capacity, this);
     StoredEnergy = battery.Stored;
   }
 

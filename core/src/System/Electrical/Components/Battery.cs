@@ -12,8 +12,7 @@ public class Battery : VirtualComponent, PowerComponent {
 
 
   public Voltage Voltage { get; } = Voltage.Low;
-  public int Priority { get; set; } = 9;
-  public int ConsumerPriority { get; set; } = 9;
+  public int Priority { get; set; } = 0;
 
   public int Demand { get; set; } = 0;
 
@@ -34,7 +33,7 @@ public class Battery : VirtualComponent, PowerComponent {
   }
 
   public void InitializeCapacity(int watts) {
-    Stored = watts;
+    Stored = 0;
     Capacity = watts;
   }
 

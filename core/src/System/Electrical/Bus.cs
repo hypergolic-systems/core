@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using Hgs.Core.Virtual;
 using System.Linq;
 using System.Diagnostics;
+using System.IO;
 
 namespace Hgs.Core.System.Electrical;
 
-public class Bus : SimulatedSystem {
+public class Bus {
   public Voltage voltage;
 
   protected PowerComponent[] components;
@@ -43,9 +44,11 @@ public class Bus : SimulatedSystem {
     }
 
     foreach (var consumers in consumerGroups.Where(c => c.Length > 0)) {
+
       while (currentProducers != null) {
         // Try to power these consumers from the current producers.
         var poweredAllConsumers = ProcessPowerStep(currentProducers, consumers);
+
         if (poweredAllConsumers) {
           // We've met all demand in this group.
           break;
@@ -57,6 +60,7 @@ public class Bus : SimulatedSystem {
           currentProducers = null;
           break;
         }
+
         currentProducers = producerCursor.Current;
       }
 
@@ -77,6 +81,7 @@ public class Bus : SimulatedSystem {
       currentProducers = producerCursor.MoveNext() ? producerCursor.Current : null;
     }
 
+
     producerCursor.Dispose();
   }
 
@@ -96,7 +101,7 @@ public class Bus : SimulatedSystem {
       // Attempt to produce an average amount of power per active producer.
       var perProducer = Math.Min(demand / activeProducers.Count, 1);
       var production = 0;
-      foreach (var producer in activeProducers) {
+      foreach (var producer in activeProducers.ToArray()) {
         var produced = producer.PowerOut(perProducer);
         production += produced;
 
@@ -109,14 +114,19 @@ public class Bus : SimulatedSystem {
         }
       }
 
+
       if (production == 0) {
         // We've run out of producers capable of producing power.
         return false;
       }
 
       while (production > 0) {
+        if (activeConsumers.Count == 0) {
+          throw new Exception("Assertion: expected active consumers to be non-empty because there was still power to distribute");
+        }
+
         var perConsumer = Math.Min(production / activeConsumers.Count, 1);
-        foreach (var consumer in activeConsumers) {
+        foreach (var consumer in activeConsumers.ToArray()) {
           var drain = consumer.PowerIn(perConsumer);
           production -= drain;
           if (consumer.Demand == 0) {

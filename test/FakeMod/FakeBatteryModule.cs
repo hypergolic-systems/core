@@ -18,7 +18,6 @@ public class FakeBatteryModule : FakePartModule, SimulatedModule
     };
     battery.InitializeCapacity(100);
     // Fake batteries start empty (more useful for testing).
-    battery.Stored = 0;
     part.AddComponent(battery);
   }
 
