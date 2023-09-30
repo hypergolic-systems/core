@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -46,22 +47,32 @@ public class SimulationDriver {
     sim.actions.Add(new AddTargetAction { Target = target });
   }
 
+  public void Shutdown() {
+    sim.Shutdown();
+  }
+
   class SimulationThread {
     public BlockingCollection<SimAction> actions = new BlockingCollection<SimAction>();
     public AutoResetEvent actionAvailable = new AutoResetEvent(false);
     private HashSet<ISimulated> targets = new HashSet<ISimulated>();
+    private Thread thread = null;
 
     public static SimulationThread Launch() {
       var sim = new SimulationThread();
-      var thread = new Thread(sim.Run) {
+      sim.thread = new Thread(sim.Run) {
         Name = "[HGS] Simulation Thread",
         IsBackground = true,
       };
-      thread.Start();
+      sim.thread.Start();
       return sim;
     }
 
-    public void Run() {
+    public void Shutdown() {
+      actions.CompleteAdding();
+      thread.Join();
+    }
+
+    private void Run() {
       double pendingDeltaT = 0;
 
       foreach (var action in actions.GetConsumingEnumerable()) {
