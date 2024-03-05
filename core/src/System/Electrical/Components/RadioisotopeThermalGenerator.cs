@@ -1,36 +1,19 @@
 using System;
 using Hgs.Core.Virtual;
+using Hgs.Core.System.Electrical;
+using Hgs.Core.Simulation;
 
 namespace Hgs.Core.System.Electrical.Components;
 
-public class RadioisotopeThermalGenerator : VirtualComponent, PowerComponent {
-  public Voltage Voltage => Voltage.Low;
+public class RadioisotopeThermalGenerator : VirtualComponent {
 
-  public int Priority { get; set; } = 1;
+  private ResourceFlow flow;
 
-  public PowerComponentType Type => PowerComponentType.Producer;
-
-  public int Demand => 0;
-
-  public int WattsPerSecond = 10;
-  public int CurrentProduction = 0;
-
-  public bool IsStorage { get; } = false;
-
-  public void PowerPrepare(uint seconds) {
-    CurrentProduction = WattsPerSecond * (int)seconds;
-  }
-
-  public int PowerIn(int power) {
-    return 0;
-  }
-
-  public int PowerOut(int demand) {
-    var used = Math.Min(CurrentProduction, demand);
-    CurrentProduction -= used;
-    return used;
-  }
-
-  public void PowerFinished(uint seconds) {
+  public override void OnAttached(Composite composite) {
+    base.OnAttached(composite);
+    this.flow = composite.resources[WellKnownResource.Electricity].NewFlow();
+    this.flow.CanProduceRate = 10;
+    this.flow.Priority = 0;
+    this.flow.StorageTier = 10;
   }
 }

@@ -17,7 +17,7 @@ public class HgPartBattery : HgPartBase {
 
   public Battery battery = null;
 
-  public override void InitializeComponents(SpacecraftPart part) {
+  public override void InitializeComponents(Composite sc, VirtualPart part) {
     var battery = new Battery {
       partId = this.part.persistentId,
     };
@@ -25,18 +25,18 @@ public class HgPartBattery : HgPartBase {
     part.AddComponent(battery);
   }
 
-  public override void OnLinkToSpacecraft(CompositeSpacecraft sc) {
-    this.battery = this.spacecraftPart.components.OfType<Battery>().First();
-    (Fields["StoredEnergy"].uiControlEditor as UI_ProgressBar).maxValue = battery.Capacity;
-    (Fields["StoredEnergy"].uiControlFlight as UI_ProgressBar).maxValue = battery.Capacity;
+  public override void OnLinkToSpacecraft(Composite sc) {
+    this.battery = this.virtualPart.components.OfType<Battery>().First();
+    (Fields["StoredEnergy"].uiControlEditor as UI_ProgressBar).maxValue = (float) battery.Capacity;
+    (Fields["StoredEnergy"].uiControlFlight as UI_ProgressBar).maxValue = (float) battery.Capacity;
   }
 
-  public override void OnSimulationUpdate(uint delta) {
+  public override void OnSynchronized() {
     Debug.Log("HgPartBattery.OnSimulationUpdate with " + battery.Stored + "/" + battery.Capacity, this);
-    StoredEnergy = battery.Stored;
+    StoredEnergy = (float) battery.Stored;
   }
 
-  public override void OnUnlinkFromSpacecraft(CompositeSpacecraft sc) {
+  public override void OnUnlinkFromSpacecraft(Composite sc) {
   }
 
   public override bool OwnsComponent(VirtualComponent component) {

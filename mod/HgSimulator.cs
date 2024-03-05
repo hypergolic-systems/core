@@ -28,6 +28,14 @@ public class HgSimulator : MonoBehaviour {
   }
 
   public void FixedUpdate() {
+    // Preconditions
+    if (FlightGlobals.Vessels == null) {
+      Debug.LogError("no vessels found");
+      return;
+    }
+
+    Debug.Log("FixedUpdate: before logic");
+
     var CurrentWorldTime = WorldTime;
     if (LastUpdateTime == 0) {
       // Guard against accidentally doing a giant update from time 0.
@@ -47,13 +55,13 @@ public class HgSimulator : MonoBehaviour {
 
       // TODO: keep a cached list of vessels
       foreach (var vessel in FlightGlobals.Vessels) {
-        var composite = SpacecraftManager.Instance.GetSpacecraft(vessel);
+        var composite = CompositeManager.Instance.GetSpacecraft(vessel);
         if (composite == null) {
           continue;
         }
 
         try {
-          composite.simulator.Simulate(delta);
+          // composite.simulator.Simulate(delta);
         } catch (Exception e) {
           Debug.LogError("Exception while simulating spacecraft: " + e.Message + "\n" + e.StackTrace.ToString());
         }

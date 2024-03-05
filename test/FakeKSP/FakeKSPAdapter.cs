@@ -57,4 +57,8 @@ public class FakeKSPAdapter : IAdapter
   uint IAdapter.Vessel_persistentId(object vessel) {
     return (vessel as FakeVessel).persistentId;
   }
+
+  public double Game_UniversalTime() {
+    return 0;
+  }
 }

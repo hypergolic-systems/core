@@ -3,7 +3,7 @@ namespace Hgs.Core.Simulation;
 public interface ISimulated {
   bool IsDirty { get; }
 
-  void RecomputeState();
+void RecomputeState();
 
   /// <summary>
   /// The maximum Δt that the current state is valid for, assuming no outside events cause an
@@ -12,4 +12,5 @@ public interface ISimulated {
   double RemainingValidDeltaT { get; }
 
   void Tick(double deltaT);
+  void OnSynchronized();
 }

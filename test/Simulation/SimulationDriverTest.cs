@@ -8,32 +8,30 @@ namespace Hgs.Test.Simulation;
 
 [TestClass]
 public class SimulationDriverTest {
-  private SimulationDriver driver;
+
 
   [TestInitialize]
   public void TestInitialize() {
-    driver = new SimulationDriver(0);
-  }
-
-  [TestCleanup]
-  public void TestCleanup() {
-    driver.Shutdown();
+    if (SimulationDriver.Instance != null) {
+      SimulationDriver.Instance.Shutdown();
+    }
+    SimulationDriver.Instance = new SimulationDriver(0);
   }
 
   [TestMethod]
   public void Test_SingleTarget() {
     var target = new MockTarget();
-    driver.AddTarget(target);
+    SimulationDriver.Instance.AddTarget(target);
 
     // Ticking the test by 5s should produce a value of 5.
-    driver.RaiseUpperBoundOfTime(5);
-    driver.Sync();
+    SimulationDriver.Instance.RaiseUpperBoundOfTime(5);
+    SimulationDriver.Instance.Sync();
     AssertWithinEpsilon(5, target.Value);
 
     // Ticking the test by 10s should cause a recalculation after 5s, and `Value` should be
     // (10, for the first 10s) + (10, for the second 5s) = 20.
-    driver.RaiseUpperBoundOfTime(15);
-    driver.Sync();
+    SimulationDriver.Instance.RaiseUpperBoundOfTime(15);
+    SimulationDriver.Instance.Sync();
     AssertWithinEpsilon(20, target.Value);
   }
 
@@ -67,6 +65,9 @@ public class SimulationDriverTest {
       }
 
       Value += Rate * deltaT;
+    }
+
+    public void OnSynchronized() {
     }
   }
 }

@@ -24,7 +24,7 @@ public class FakePart {
     return modules.OfType<T>().ToList();
   }
 
-  public T GetSimulatedComponent<T>(CompositeSpacecraft composite) where T: class {
+  public T GetSimulatedComponent<T>(Composite composite) where T: class {
     return composite.partMap[persistentId].components.OfType<T>().First();
   }
 

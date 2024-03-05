@@ -1,32 +1,61 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 
+using Hgs.Core;
+
 namespace Hgs.Core.Simulation;
 
 /// <summary>
-/// Coordinates simulation of all of the `CompositeSpacecraft` in the universe.
+/// Coordinates simulation of all of the `Composite` spacecraft in the universe.
 /// </summary>
 public class SimulationDriver {
   private SimulationThread sim = SimulationThread.Launch();
 
-  private double upperBoundOfTime = 0;
+  public static SimulationDriver Instance;
 
+  public static void Initialize() {
+    Instance = new SimulationDriver(Adapter.Game_UniversalTime());
+  }
+
+  // Target time that the simulation is currently trying to reach. Increases over time.
+  private double upperBoundOfTime = 0;
   public SimulationDriver(double initialTime) {
     upperBoundOfTime = initialTime;
   }
+
+  public bool IsSynced {
+    get;
+    private set;
+  } = true;
 
   /// <summary>
   /// Block until the simulation reaches its upper time bound.
   /// </summary>
   public void Sync() {
+    Console.WriteLine("attempt sync");
+    if (this.IsSynced) {
+      Console.WriteLine("no sync needed");
+      return;
+    }
     var ev = new ManualResetEventSlim();
-    sim.actions.Add(new SyncAction { Event = ev });
+    Console.WriteLine("pushing sync action");
+    sim.actions.Add(new SyncAction { SimulationDone = ev });
     ev.Wait();
+    Console.WriteLine("Sync action return");
+
+    // At this point, we're guaranteed that there are no further actions in the simulation queue,
+    // since the `SyncEvent` was the last action added and the UI thread had no opportunity to add
+    // new actions until now. So we can freely read from the simulation state and be guaranteed
+    // that it's synchronized.
+
+    sim.Synchronized();
+
+    this.IsSynced = true;
+    Console.WriteLine("synced");
   }
 
   /// <summary>
@@ -37,14 +66,18 @@ public class SimulationDriver {
   /// follow this method with a call to `Sync()`.
   /// </summary>
   public void RaiseUpperBoundOfTime(double time) {
+    Console.WriteLine("Raising bound?");
     var deltaT = time - upperBoundOfTime;
     Debug.Assert(deltaT >= 0);
     upperBoundOfTime = time;
     sim.actions.Add(new AdvanceTimeAction { DeltaT = deltaT });
+    this.IsSynced = false;
+    Console.WriteLine("Done raising bound?");
   }
 
   public void AddTarget(ISimulated target) {
     sim.actions.Add(new AddTargetAction { Target = target });
+    this.IsSynced = false;
   }
 
   public void Shutdown() {
@@ -72,34 +105,50 @@ public class SimulationDriver {
       thread.Join();
     }
 
+    public void Synchronized() {
+      foreach (var target in targets) {
+        target.OnSynchronized();
+      }
+    }
+
     private void Run() {
+      // Simulation running in a separate thread.
       double pendingDeltaT = 0;
 
       foreach (var action in actions.GetConsumingEnumerable()) {
+        Console.WriteLine("[Sim] Processing action: " + action.GetType().Name);
         if (action is AdvanceTimeAction advance) {
+          Console.WriteLine("[Sim] AdvanceTimeAction: " + advance.DeltaT);
           pendingDeltaT += advance.DeltaT;
           if (actions.Count > 0) {
             // We want to coalesce multiple AdvanceTimeActions in order to take as few simulation
             // steps as possible. If there are more actions to process, we simply record the
             // cumulative Δt and continue processing.
+            Console.WriteLine("[Sim] More actions after advancing time: " + actions.Count);
             continue;
           }
         }
 
         // Before executing any actions, we need to bring the simulation up to the current time.
         if (pendingDeltaT > 0) {
+          Console.WriteLine("[Sim] ticking by " + pendingDeltaT);
           tickSimulation(pendingDeltaT);
           pendingDeltaT = 0;
+          Console.WriteLine("[Sim] ticked by " + pendingDeltaT);
         }
 
         if (action is SyncAction sync) {
+          Console.WriteLine("[Sim] Sync action");
           // A SyncAction is a request to notify the caller when the simulation has reached this
           // point (all prior actions have been processed).
-          sync.Event.Set();
+          sync.SimulationDone.Set();
         } else if (action is AddTargetAction add) {
+          Console.WriteLine("[Sim] AddTarget action");
           targets.Add(add.Target);
         }
+        Console.WriteLine("[Sim] end of loop");
       }
+      Console.WriteLine("[Sim] end of run");
     }
 
     private void tickSimulation(double deltaT) {
@@ -111,6 +160,7 @@ public class SimulationDriver {
         var deltaTStep = Math.Min(deltaT, deltaTConstraint);
         Debug.Assert(deltaTStep > 0);
         Debug.Assert(deltaTStep <= deltaT);
+        Console.WriteLine("[Sim] delta-t step " + deltaTStep);
 
         // Now that we know how long it's valid to tick the simulation for, tick all of the
         // individual simulations. This operation is done in a single-threaded manner, since ticking
@@ -138,6 +188,7 @@ public class SimulationDriver {
         if (dirtyTargets.Count == 0) {
           return;
         }
+        Console.WriteLine("[Sync] Dirty targets: " + dirtyTargets.Count + " / " + dirtyTargets[0].GetType().Name);
 
         // Unlike the simple tick/advance operation, recomputing state is potentially expensive.
         // Therefore, we push the work of recomputation into a thread pool to parallelize it as
@@ -171,7 +222,7 @@ public class SimulationDriver {
   }
 
   record SyncAction : SimAction {
-    public ManualResetEventSlim Event;
+    public ManualResetEventSlim SimulationDone;
   }
 
   record AddTargetAction : SimAction {

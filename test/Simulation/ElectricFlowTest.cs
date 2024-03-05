@@ -1,6 +1,3 @@
-using System;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
 using Hgs.Core.Simulation;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -9,54 +6,50 @@ namespace Hgs.Test.Simulation;
 [TestClass]
 public class ElectricFlowTest {
 
-  private ResourceFlowSimulator sim;
+  private ResourceSystem sim;
 
   [TestInitialize]
   public void TestInitialize() {
-    sim = new ResourceFlowSimulator(new ElectricFlowResolver());
+    sim = new ResourceSystem(new ElectricFlowResolver());
   }
 
   [TestMethod]
   public void Test_OneInOneOut() {
-    var prod = sim.Flow();
+    var prod = sim.NewFlow();
     prod.CanProduceRate = 10;
-    var cons = sim.Flow();
+    var cons = sim.NewFlow();
     cons.CanConsumeRate = 5;
 
-    sim.Reflow();
+    sim.RecomputeState();
 
-    AssertWithinEpsilon(-5, prod.ActiveRate);
-    AssertWithinEpsilon(5, cons.ActiveRate);
+    Util.AssertWithinEpsilon(-5, prod.ActiveRate);
+    Util.AssertWithinEpsilon(5, cons.ActiveRate);
   }
 
   [TestMethod]
   public void Test_OneSmallConsumer() {
-    var prod1 = sim.Flow();
-    var prod2 = sim.Flow();
+    var prod1 = sim.NewFlow();
+    var prod2 = sim.NewFlow();
     prod1.CanProduceRate = prod2.CanProduceRate = 10;
     
-    var cons1 = sim.Flow();
-    var cons2 = sim.Flow();
-    var cons3 = sim.Flow();
+    var cons1 = sim.NewFlow();
+    var cons2 = sim.NewFlow();
+    var cons3 = sim.NewFlow();
     cons1.CanConsumeRate = cons3.CanConsumeRate = 10;
     cons2.CanConsumeRate = 6;
 
-    sim.Reflow();
+    sim.RecomputeState();
 
     // Producers should be tapped out.
-    AssertWithinEpsilon(-10, prod1.ActiveRate);
-    AssertWithinEpsilon(-10, prod2.ActiveRate);
+    Util.AssertWithinEpsilon(-10, prod1.ActiveRate);
+    Util.AssertWithinEpsilon(-10, prod2.ActiveRate);
 
     // Consumer 2 should be maxed out.
-    AssertWithinEpsilon(6, cons2.ActiveRate);
+    Util.AssertWithinEpsilon(6, cons2.ActiveRate);
     // Consumers 1 and 3 should have split the remaining 14:
-    AssertWithinEpsilon(7, cons1.ActiveRate);
-    AssertWithinEpsilon(7, cons3.ActiveRate);
+    Util.AssertWithinEpsilon(7, cons1.ActiveRate);
+    Util.AssertWithinEpsilon(7, cons3.ActiveRate);
 
     
-  }
-
-  private void AssertWithinEpsilon(double expected, double actual) {
-    Assert.IsTrue(Math.Abs(expected - actual) < 0.0001, $"Expected {expected} but got {actual}.");
   }
 }

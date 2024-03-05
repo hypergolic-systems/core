@@ -55,4 +55,8 @@ public class KspAdapter : IAdapter {
   public List<T> Vessel_FindPartModulesImplementing<T>(object vessel) where T : class {
     return (vessel as Vessel).FindPartModulesImplementing<T>();
   }
+
+  public double Game_UniversalTime() {
+    return HighLogic.CurrentGame.UniversalTime;
+  }
 }

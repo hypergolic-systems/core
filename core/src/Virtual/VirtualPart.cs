@@ -1,17 +1,15 @@
-
-using System;
+using System.Collections.Generic;
 
 namespace Hgs.Core.Virtual;
 
-public abstract class VirtualComponent {
-  public uint partId;
-  public int index;
+public class VirtualPart {
 
-  public SpacecraftPart part;
+  public uint id;
 
-  public SimulatedModule liveModule;
+  public List<VirtualComponent> components = new();
 
-  public virtual void Save(object node) {}
-
-  public virtual void Load(object node) {}
+  public void AddComponent(VirtualComponent component) {
+    component.index = components.Count;
+    components.Add(component);
+  }
 }

@@ -56,6 +56,10 @@ public class Adapter {
   public static uint Vessel_persistentId(object vessel) {
     return Instance.Vessel_persistentId(vessel);
   }
+
+  public static double Game_UniversalTime() {
+    return Instance.Game_UniversalTime();
+  }
 }
 
 public interface IAdapter {
@@ -83,4 +87,6 @@ public interface IAdapter {
   public IEnumerable<object> Part_children(object part);
 
   public List<T> Vessel_FindPartModulesImplementing<T>(object vessel) where T: class;
+
+  public double Game_UniversalTime();
 }

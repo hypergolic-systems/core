@@ -11,12 +11,12 @@ namespace Hgs.Test.Virtual;
 [TestClass]
 public class VesselShapeTests {
 
-  private SpacecraftManager manager;
+  private CompositeManager manager;
 
   [TestInitialize]
   public void TestInitialize() {
     Adapter.Instance = new FakeKSPAdapter();
-    manager = SpacecraftManager.Instance;
+    manager = CompositeManager.Instance;
   }
 
   [TestMethod]

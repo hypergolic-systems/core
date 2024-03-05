@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -5,7 +6,7 @@ using System.Linq;
 namespace Hgs.Core.Simulation;
 
 
-public class ElectricFlowResolver : ResourceFlowSimulator.IFlowResolver {
+public class ElectricFlowResolver : ResourceSystem.IFlowResolver {
 
   public void ResolveFlows(List<ResourceFlow> flows) {
     // Positive rates are consumption, negative rates are production.
@@ -31,6 +32,9 @@ public class ElectricFlowResolver : ResourceFlowSimulator.IFlowResolver {
     // Update the flows with their new rates.
     foreach (var flow in flows) {
       flow.ActiveRate = calculatedRates[flow];
+      if (flow.OnSetActiveRate != null) {
+        flow.OnSetActiveRate(flow.ActiveRate);
+      }
     }
 
     Debug.Assert(flows.Sum(f => f.ActiveRate) == 0, "Net flow should be 0.");

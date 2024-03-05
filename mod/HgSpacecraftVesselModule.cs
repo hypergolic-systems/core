@@ -9,9 +9,9 @@ namespace Hgs.Mod.Virtual {
    */
   public class HgSpacecraftVesselModule : VesselModule {
     /**
-     * The `Spacecraft` associated with this vessel, or `null` if none exists.
+     * The `Composite` associated with this vessel, or `null` if none exists.
      */
-    public CompositeSpacecraft composite;
+    public Composite composite;
 
     protected override void OnAwake() {
       base.OnAwake();
@@ -24,17 +24,17 @@ namespace Hgs.Mod.Virtual {
         return;
       }
 
-      SpacecraftManager.Instance.OnLoadVessel(vessel);
+      CompositeManager.Instance.OnLoadVessel(vessel);
     }
 
     public override void OnUnloadVessel() {
-      SpacecraftManager.Instance.OnUnloadVessel(vessel);
+      CompositeManager.Instance.OnUnloadVessel(vessel);
       base.OnUnloadVessel();
     }
 
     protected override void OnLoad(ConfigNode node) {
       base.OnLoad(node);
-      SpacecraftManager.Instance.OnLoadVesselConfig(node);
+      CompositeManager.Instance.OnLoadVesselConfig(node);
     }
 
     protected override void OnSave(ConfigNode node) {

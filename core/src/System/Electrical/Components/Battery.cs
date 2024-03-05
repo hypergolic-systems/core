@@ -1,29 +1,24 @@
 using System;
 using Hgs.Core.Virtual;
 using Hgs.Core.System.Electrical;
+using Hgs.Core.Simulation;
 
 namespace Hgs.Core.System.Electrical.Components;
 
-public class Battery : VirtualComponent, PowerComponent {
+public class Battery : VirtualComponent {
 
-  public int Stored = 0;
-  public int Capacity = 0;
+  public double Stored = 0;
+  public double Capacity = 0;
 
-
-
-  public Voltage Voltage { get; } = Voltage.Low;
-  public int Priority { get; set; } = 0;
-
-  public int Demand { get; set; } = 0;
-
-  public bool IsStorage { get; } = true;
-
-  public PowerComponentType Type => PowerComponentType.Storage;
+  public ResourceFlow flow;
 
   public override void Load(object node) {
     base.Load(node);
     Stored = int.Parse(Adapter.ConfigNode_Get(node, "stored"));
     Capacity = int.Parse(Adapter.ConfigNode_Get(node, "capacity"));
+    flow.ActiveRate = 0;
+    flow.CanProduceRate = 0;
+    flow.CanConsumeRate = 10;
   }
 
   public override void Save(object node) {
@@ -32,27 +27,39 @@ public class Battery : VirtualComponent, PowerComponent {
     Adapter.ConfigNode_Set(node, "capacity", Capacity.ToString());
   }
 
+  public override void OnAttached(Composite composite) {
+    base.OnAttached(composite);
+    this.flow = composite.resources[WellKnownResource.Electricity].NewFlow();
+    this.flow.CanProduceRate = Stored > 0 ? 10 : 0;
+    this.flow.CanConsumeRate = Stored < Capacity ? 10 : 0;
+    this.flow.StorageTier = 5;
+    this.flow.OnFlow = OnFlow;
+    this.flow.OnSetActiveRate = OnSetActiveRate;
+  }
+
   public void InitializeCapacity(int watts) {
     Stored = 0;
     Capacity = watts;
   }
 
-  public int PowerIn(int power) {
-    var charge = Math.Min(Capacity - Stored, power);
-    Stored += charge;
-    return charge;
+  public void OnFlow(double amount) {
+    Stored += amount;
+    flow.CanProduceRate = Stored > 0 ? 10 : 0;
+    flow.CanConsumeRate = Stored < Capacity ? 10 : 0;
+    this.calculateRemainingValidDeltaT(flow.ActiveRate);
   }
 
-  public int PowerOut(int demand) {
-    var draw = Math.Min(Stored, demand);
-    Stored -= draw;
-    return draw;
+  public void OnSetActiveRate(double rate) {
+    Console.WriteLine("[Battery] active rate: " + rate);
+    this.calculateRemainingValidDeltaT(rate);
   }
 
-  public void PowerPrepare(uint seconds) {
-    // Recharge if there's power available.
-    this.Demand = Capacity - Stored;
+  private void calculateRemainingValidDeltaT(double rate) {
+    if (rate > 0) {
+      flow.RemainingValidDeltaT = (Capacity - Stored) / rate;
+    } else {
+      flow.RemainingValidDeltaT = double.MaxValue;
+    }
   }
-  public void PowerFinished(uint seconds) {}
 }
 

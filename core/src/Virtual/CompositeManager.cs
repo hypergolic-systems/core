@@ -2,35 +2,36 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Hgs.Core.Simulation;
 
 namespace Hgs.Core.Virtual;
 
 /// <summary>
-/// Manages `CompositeSpacecraft` instances, which are the virtual representations of physical
+/// Manages `Composite` instances, which are the virtual representations of physical
 /// vessels.
 /// </summary>
-public class SpacecraftManager {
+public class CompositeManager {
 
-  protected Dictionary<uint, CompositeSpacecraft> composites = new();
+  protected Dictionary<uint, Composite> composites = new();
   protected Dictionary<string, Type> componentTypes = new();
 
-  public static SpacecraftManager Instance = new SpacecraftManager();
+  public static CompositeManager Instance = new CompositeManager();
 
   public void RegisterComponentType(Type type) {
     componentTypes[type.FullName] = type;
   }
 
-  public CompositeSpacecraft GetSpacecraft(object vessel) {
+  public Composite GetSpacecraft(object vessel) {
     var vesselId = Adapter.Vessel_persistentId(vessel);
     return composites.ContainsKey(vesselId) ? composites[vesselId] : null;
   }
 
-  public CompositeSpacecraft OnLoadVessel(object vessel) {
+  public Composite OnLoadVessel(object vessel) {
     var id = Adapter.Vessel_persistentId(vessel);
     // `vessel` was just loaded physically, and now has parts.
     if (!composites.ContainsKey(id)) {
       // This vessel has never before been seen, so create it freshly from the parts themselves.
-      composites[id] = new CompositeSpacecraft(id);
+      composites[id] = new Composite(id);
     }
 
     var composite = composites[id];
@@ -39,45 +40,51 @@ public class SpacecraftManager {
 
     // Keep track of which parts were here from the start, so we know which ones didn't match any
     // `SimulatedModule`s and should be removed.
-    var existingSpacecraftParts = new HashSet<uint>(composite.partMap.Keys);
+    var existingVirtualParts = new HashSet<uint>(composite.partMap.Keys);
 
     // Keep track of which parts were newly created. That's because we need to initialize those
     // parts when we find `SimulatedModule`s for them.
     var newParts = new HashSet<uint>();
 
-    foreach (var module in Adapter.Vessel_FindPartModulesImplementing<SimulatedModule>(vessel)) {
+    foreach (var module in Adapter.Vessel_FindPartModulesImplementing<VirtualModule>(vessel)) {
       var partId = Adapter.Part_persistentId(module.gamePart);
 
       if (!composite.partMap.ContainsKey(partId)) {
-        composite.partMap[partId] = new SpacecraftPart {
+        composite.partMap[partId] = new VirtualPart {
           id = partId,
         };
       }
 
       var part = composite.partMap[partId];
-      module.spacecraftPart = part;
+      module.virtualPart = part;
       if (!part.components.Any(component => module.OwnsComponent(component))) {
         // This module owns no components on this part, so see if it wants to create some.
-        module.InitializeComponents(part);
+        module.InitializeComponents(composite, part);
       }
 
       // Associate the module with the components it owns.
       foreach (var component in part.components) {
         if (module.OwnsComponent(component)) {
-          component.liveModule = module;
+          component.virtualModule = module;
         }
+        Console.WriteLine("[CompositeManager] attached: " + component.GetType().Name);
+        component.OnAttached(composite);
       }
  
       module.OnLinkToSpacecraft(composite);
-      existingSpacecraftParts.Remove(partId);
+      existingVirtualParts.Remove(partId);
     }
 
-    foreach (var oldPartId in existingSpacecraftParts) {
+    foreach (var oldPartId in existingVirtualParts) {
       // These parts didn't have corresponding physical parts. Remove them from the spacecraft.
       composite.partMap.Remove(oldPartId);
     }
 
-    composite.InitializeSimulation();
+    if (SimulationDriver.Instance != null) {
+      foreach (var resource in composite.resources.Values) {
+        SimulationDriver.Instance.AddTarget(resource);
+      }
+    }
 
     return composite;
   }
@@ -89,10 +96,10 @@ public class SpacecraftManager {
     }
 
     var composite = composites[id];
-    foreach (var module in Adapter.Vessel_FindPartModulesImplementing<SimulatedModule>(vessel)) {
+    foreach (var module in Adapter.Vessel_FindPartModulesImplementing<VirtualModule>(vessel)) {
       module.OnUnlinkFromSpacecraft(composite);
-      foreach (var component in module.spacecraftPart.components) {
-        component.liveModule = null;
+      foreach (var component in module.virtualPart.components) {
+        component.virtualModule = null;
       }
     }
     composite.liveVessel = null;
@@ -101,18 +108,18 @@ public class SpacecraftManager {
   public void OnLoadVesselConfig(object node) {
     var compositeNode = Adapter.ConfigNode_Get(node, "HGS_COMPOSITE");
     if (compositeNode == null) {
-      // There is no serialized CompositeSpacecraft associated with this vessel (yet).
+      // There is no serialized Composite associated with this vessel (yet).
       return;
     }
 
     var id = uint.Parse(Adapter.ConfigNode_Get(compositeNode, "id"));
-    var composite = new CompositeSpacecraft(id);
+    var composite = new Composite(id);
     composites[id] = composite;
 
     this.LoadStructureFromConfig(composite, compositeNode);
   }
 
-  protected void LoadStructureFromConfig(CompositeSpacecraft composite, object node) {
+  protected void LoadStructureFromConfig(Composite composite, object node) {
     foreach (var craftNode in Adapter.ConfigNode_GetNodes(node, "SPACECRAFT")) {
       var craft = new Spacecraft {
         composite = composite,
@@ -125,7 +132,7 @@ public class SpacecraftManager {
         craft.segmentsByDefiningPart[definingPart] = segment;
 
         foreach (var partNode in Adapter.ConfigNode_GetNodes(segment, "PART")) {
-          var part = new SpacecraftPart {
+          var part = new VirtualPart {
             id = uint.Parse(Adapter.ConfigNode_Get(partNode, "id")),
           };
           foreach (var componentNode in Adapter.ConfigNode_GetNodes(partNode, "COMPONENT")) {
@@ -144,13 +151,12 @@ public class SpacecraftManager {
         }
       }
     }
-    composite.InitializeSimulation();
   }
 
   /// <summary>
-  /// Extracts the structure of a `CompositeSpacecraft` from the live parts.
+  /// Extracts the structure of a `Composite` from the live parts.
   /// </summary>
-  protected void LoadStructureFromVessel(CompositeSpacecraft composite, object vessel) {
+  protected void LoadStructureFromVessel(Composite composite, object vessel) {
     composite.Clear();
     var rootCraft = new Spacecraft();
     composite.spacecraft.Add(rootCraft);
@@ -163,10 +169,10 @@ public class SpacecraftManager {
   }
 
   /// <summary>
-  /// Add `part` (including all of its descendents) to the `CompositeSpacecraft` tree, creating new
+  /// Add `part` (including all of its descendents) to the `Composite` tree, creating new
   /// spacecraft or segments if needed.
   /// </summary>
-  protected void IngestPartIntoSegmentTree(CompositeSpacecraft composite, Spacecraft craft, Segment segment, object part, object fromPart) {
+  protected void IngestPartIntoSegmentTree(Composite composite, Spacecraft craft, Segment segment, object part, object fromPart) {
     var segmentForThisPart = segment;
     var segmentForChildParts = segment;
 
