@@ -59,4 +59,8 @@ public class KspAdapter : IAdapter {
   public double Game_UniversalTime() {
     return HighLogic.CurrentGame.UniversalTime;
   }
+
+  public void Log(string message) {
+    UnityEngine.Debug.Log("[HGS] " + message);
+  }
 }

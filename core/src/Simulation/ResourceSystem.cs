@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace Hgs.Core.Simulation;
@@ -15,6 +16,10 @@ public class ResourceSystem(ResourceSystem.IFlowResolver director) : ISimulated 
 
   public double RemainingValidDeltaT {
     get => flows.Count == 0 ? double.MaxValue : flows.Select(f => f.RemainingValidDeltaT).Min();
+  }
+
+  public string DirectorName {
+    get => director.GetType().Name;
   }
 
   public void RecomputeState() {
@@ -42,7 +47,11 @@ public class ResourceSystem(ResourceSystem.IFlowResolver director) : ISimulated 
   }
 
   public void OnSynchronized() {
-    
+    foreach (var flow in this.flows) {
+      if (flow.OnSynchronized != null) {
+        flow.OnSynchronized();
+      }
+    }
   }
 
   public interface IFlowResolver {

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Hgs.Core;
 
@@ -60,5 +61,9 @@ public class FakeKSPAdapter : IAdapter
 
   public double Game_UniversalTime() {
     return 0;
+  }
+
+  public void Log(string message) {
+    Console.WriteLine(message);
   }
 }

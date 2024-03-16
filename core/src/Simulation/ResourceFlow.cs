@@ -11,6 +11,10 @@ public class ResourceFlow(ResourceSystem sim) {
   public delegate void OnSetActiveRateFn(double rate);
   public delegate void OnFlowFn(double amount);
 
+  public delegate void OnSynchronizedFn();
+
+  public string Name = "(unnamed flow)";
+
   private double _canProduceRate = 0f;
   private double _canConsumeRate = 0f;
   private int _storageTier = 0;
@@ -23,7 +27,6 @@ public class ResourceFlow(ResourceSystem sim) {
       if (_canProduceRate == value) {
         return;
       }
-      Console.WriteLine("[Flow] going dirty because production: " + _canProduceRate + " != " + value);
       _canProduceRate = value;
       sim.IsDirty = true;
     }
@@ -35,7 +38,6 @@ public class ResourceFlow(ResourceSystem sim) {
       if (_canConsumeRate == value) {
         return;
       }
-      Console.WriteLine("[Flow] going dirty because consumption: " + _canConsumeRate+ " != " + value);
       _canConsumeRate = value;
       sim.IsDirty = true;
     }
@@ -52,7 +54,6 @@ public class ResourceFlow(ResourceSystem sim) {
       if (_storageTier == value) {
         return;
       }
-      Console.WriteLine("[Flow] going dirty because storage: " + _storageTier + " != " + value);
       _storageTier = value;
       sim.IsDirty = true;
     }
@@ -69,7 +70,6 @@ public class ResourceFlow(ResourceSystem sim) {
   public int Priority {
     get => _priority;
     set {
-      Console.WriteLine("[Flow] going dirty because priority" + _priority + " != " + value);
       _priority = value;
       sim.IsDirty = true;
     }
@@ -79,6 +79,8 @@ public class ResourceFlow(ResourceSystem sim) {
 
   public OnSetActiveRateFn OnSetActiveRate = null;
   public OnFlowFn OnFlow = null;
+
+  public OnSynchronizedFn OnSynchronized = null;
 
   internal void Tick(double deltaT) {
     OnFlow?.Invoke(this.ActiveRate * deltaT);

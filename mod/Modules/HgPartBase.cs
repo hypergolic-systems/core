@@ -18,7 +18,7 @@ public abstract class HgPartBase : PartModule, VirtualModule  {
   public abstract bool OwnsComponent(VirtualComponent component);
 
   public abstract void InitializeComponents(Composite sc, VirtualPart part);
-  public abstract void OnLinkToSpacecraft(Composite sc);
-  public abstract void OnSynchronized();
-  public abstract void OnUnlinkFromSpacecraft(Composite sc);
+  public virtual void OnLinkToSpacecraft(Composite sc) {}
+  public virtual void OnUnlinkFromSpacecraft(Composite sc) {}
+  public virtual void OnSynchronized() {}
 }

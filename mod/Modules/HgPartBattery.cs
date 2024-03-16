@@ -1,4 +1,5 @@
 using System.Linq;
+using Hgs.Core;
 using Hgs.Core.System.Electrical.Components;
 using Hgs.Core.Virtual;
 using UnityEngine;
@@ -32,7 +33,6 @@ public class HgPartBattery : HgPartBase {
   }
 
   public override void OnSynchronized() {
-    Debug.Log("HgPartBattery.OnSimulationUpdate with " + battery.Stored + "/" + battery.Capacity, this);
     StoredEnergy = (float) battery.Stored;
   }
 

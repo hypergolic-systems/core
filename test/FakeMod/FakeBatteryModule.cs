@@ -3,6 +3,7 @@ using Hgs.Core.System.Electrical.Components;
 using Hgs.Core.Virtual;
 using Hgs.Test.FakeKSP;
 
+
 namespace Hgs.Test.FakeMod;
 public class FakeBatteryModule : FakePartModule, VirtualModule
 {

@@ -15,6 +15,7 @@ public class CompositeManager {
   protected Dictionary<uint, Composite> composites = new();
   protected Dictionary<string, Type> componentTypes = new();
 
+
   public static CompositeManager Instance = new CompositeManager();
 
   public void RegisterComponentType(Type type) {
@@ -35,6 +36,7 @@ public class CompositeManager {
     }
 
     var composite = composites[id];
+    composite.liveVessel = vessel;
     composite.Clear();
     this.LoadStructureFromVessel(composite, vessel);
 
@@ -67,7 +69,6 @@ public class CompositeManager {
         if (module.OwnsComponent(component)) {
           component.virtualModule = module;
         }
-        Console.WriteLine("[CompositeManager] attached: " + component.GetType().Name);
         component.OnAttached(composite);
       }
  
@@ -238,6 +239,12 @@ public class CompositeManager {
       // For example, a decoupler which will detach from `fromPart` when it's decoupled.
       segmentForThisPart = segmentForChildParts = new Segment(composite, thisPartId);
       composite.segmentsByDefiningPart.Add(segmentForChildParts.definingPart, segmentForChildParts);
+    }
+  }
+
+  public void OnSynchronized() {
+    foreach (var composite in composites.Values) {
+      composite.OnSynchronized();
     }
   }
 }

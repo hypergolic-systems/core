@@ -1,6 +1,4 @@
 
-using System;
-using System.CodeDom;
 using System.Linq;
 using Hgs.Core;
 using Hgs.Core.Simulation;
@@ -19,6 +17,7 @@ public class ElectricTest {
   public void TestInitialize() {
     Adapter.Instance = new FakeKSPAdapter();
     SimulationDriver.Initialize();
+    SimulationDriver.Instance.RaiseUpperBoundOfTime(10);
   }
 
   [TestCleanup]
@@ -42,12 +41,12 @@ public class ElectricTest {
     var battery = composite.partMap[batteryPart.persistentId].components.OfType<Battery>().First();
 
     // Advance 10 seconds
-    SimulationDriver.Instance.RaiseUpperBoundOfTime(5);
+    SimulationDriver.Instance.RaiseUpperBoundOfTime(15);
     SimulationDriver.Instance.Sync();
 
     Util.AssertWithinEpsilon(50, battery.Stored);
 
-    SimulationDriver.Instance.RaiseUpperBoundOfTime(105);
+    SimulationDriver.Instance.RaiseUpperBoundOfTime(115);
     SimulationDriver.Instance.Sync();
 
     Util.AssertWithinEpsilon(100, battery.Stored);

@@ -30,6 +30,7 @@ public class Battery : VirtualComponent {
   public override void OnAttached(Composite composite) {
     base.OnAttached(composite);
     this.flow = composite.resources[WellKnownResource.Electricity].NewFlow();
+    this.flow.Name = $"Battery({partId})";
     this.flow.CanProduceRate = Stored > 0 ? 10 : 0;
     this.flow.CanConsumeRate = Stored < Capacity ? 10 : 0;
     this.flow.StorageTier = 5;
@@ -50,7 +51,6 @@ public class Battery : VirtualComponent {
   }
 
   public void OnSetActiveRate(double rate) {
-    Console.WriteLine("[Battery] active rate: " + rate);
     this.calculateRemainingValidDeltaT(rate);
   }
 

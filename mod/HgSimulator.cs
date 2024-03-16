@@ -1,5 +1,6 @@
 using System;
 using Hgs.Core;
+using Hgs.Core.Simulation;
 using Hgs.Core.Virtual;
 using UnityEngine;
 
@@ -25,16 +26,14 @@ public class HgSimulator : MonoBehaviour {
   public void Awake() {
     GameEvents.onGameStatePostLoad.Add(OnGameLoaded);
     GameEvents.onVesselWasModified.Add(OnVesselWasModified);
+    SimulationDriver.Initialize();
   }
 
   public void FixedUpdate() {
     // Preconditions
     if (FlightGlobals.Vessels == null) {
-      Debug.LogError("no vessels found");
       return;
     }
-
-    Debug.Log("FixedUpdate: before logic");
 
     var CurrentWorldTime = WorldTime;
     if (LastUpdateTime == 0) {
@@ -49,26 +48,9 @@ public class HgSimulator : MonoBehaviour {
       return;
     }
 
-    while (totalDelta > 0) {
-      var delta = Math.Min(totalDelta, MAX_TIME_DELTA); 
-      totalDelta -= delta;
-
-      // TODO: keep a cached list of vessels
-      foreach (var vessel in FlightGlobals.Vessels) {
-        var composite = CompositeManager.Instance.GetSpacecraft(vessel);
-        if (composite == null) {
-          continue;
-        }
-
-        try {
-          // composite.simulator.Simulate(delta);
-        } catch (Exception e) {
-          Debug.LogError("Exception while simulating spacecraft: " + e.Message + "\n" + e.StackTrace.ToString());
-        }
-      }
-    }
-
     LastUpdateTime = CurrentWorldTime;
+    SimulationDriver.Instance.RaiseUpperBoundOfTime(LastUpdateTime);
+    SimulationDriver.Instance.Sync();
   }
 
   public void OnGameLoaded(ConfigNode _) {

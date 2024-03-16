@@ -60,6 +60,10 @@ public class Adapter {
   public static double Game_UniversalTime() {
     return Instance.Game_UniversalTime();
   }
+
+  public static void Log(string message) {
+    Instance.Log(message);
+  }
 }
 
 public interface IAdapter {
@@ -89,4 +93,6 @@ public interface IAdapter {
   public List<T> Vessel_FindPartModulesImplementing<T>(object vessel) where T: class;
 
   public double Game_UniversalTime();
+
+  public void Log(string message);
 }

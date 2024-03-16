@@ -13,7 +13,6 @@ public class FakeRTGModule : FakePartModule, VirtualModule
   public VirtualPart virtualPart { get; set; }
 
   public void InitializeComponents(Composite composite, VirtualPart part) {
-    // Fake batteries start empty (more useful for testing).
     var rtg = new RadioisotopeThermalGenerator {
       partId = this.part.persistentId,
     };

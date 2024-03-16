@@ -15,15 +15,6 @@ public class HgPartRtg : HgPartBase {
     part.AddComponent(rtg);
   }
 
-  public override void OnLinkToSpacecraft(Composite sc) {
-  }
-
-  public override void OnSynchronized() {
-  }
-
-  public override void OnUnlinkFromSpacecraft(Composite sc) {
-  }
-
   public override bool OwnsComponent(VirtualComponent component) {
     return component is RadioisotopeThermalGenerator;
   }
