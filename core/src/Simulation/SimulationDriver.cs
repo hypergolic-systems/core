@@ -1,222 +1,113 @@
+
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 
-using Hgs.Core;
-using Hgs.Core.Virtual;
-
 namespace Hgs.Core.Simulation;
 
-/// <summary>
-/// Coordinates simulation of all of the `Composite` spacecraft in the universe.
-/// </summary>
 public class SimulationDriver {
-  private SimulationThread sim = SimulationThread.Launch();
+
+  private const double EPSILON_TIME = 1e-6;
+  private HashSet<ISimulated> targets = new HashSet<ISimulated>();
+
+  private double lastSynchronizedTime = 0;
 
   public static SimulationDriver Instance;
 
   public static void Initialize() {
     Instance = new SimulationDriver();
   }
-
-  // Target time that the simulation is currently trying to reach. Increases over time.
-  private double upperBoundOfTime = 0;
-
-  public bool IsSynced {
-    get;
-    private set;
-  } = true;
-
-  /// <summary>
-  /// Block until the simulation reaches its upper time bound.
-  /// </summary>
-  public void Sync() {
-    if (this.IsSynced) {
-      return;
-    }
-    var ev = new ManualResetEventSlim();
-    sim.actions.Add(new SyncAction { SimulationDone = ev });
-    ev.Wait();
-
-    // At this point, we're guaranteed that there are no further actions in the simulation queue,
-    // since the `SyncEvent` was the last action added and the UI thread had no opportunity to add
-    // new actions until now. So we can freely read from the simulation state and be guaranteed
-    // that it's synchronized.
-
-    sim.Synchronized();
-
-    this.IsSynced = true;
-  }
-
-  /// <summary>
-  /// Allow the simulation to progress up to the given time.
-  /// 
-  /// Note that the simulation is asynchronous, and this method will return before the simulation
-  /// has actually reached the given time. To wait for the simulation to reach the given time,
-  /// follow this method with a call to `Sync()`.
-  /// </summary>
-  public void RaiseUpperBoundOfTime(double time) {
-    if (upperBoundOfTime == 0) {
-      upperBoundOfTime = time;
-      return;
-    }
-
-    var deltaT = time - upperBoundOfTime;
-    Debug.Assert(deltaT >= 0);
-    upperBoundOfTime = time;
-    sim.actions.Add(new AdvanceTimeAction { DeltaT = deltaT });
-    this.IsSynced = false;
-  }
-
+  
   public void AddTarget(ISimulated target) {
-    sim.actions.Add(new AddTargetAction { Target = target });
-    this.IsSynced = false;
+    targets.Add(target);
   }
 
-  public void Shutdown() {
-    sim.Shutdown();
+  public void Sync(double time) {
+    if (lastSynchronizedTime == 0) {
+      // This is our first synchronization, so capture the current
+      // time only. No recomputation is needed.
+      lastSynchronizedTime = time;
+      return;
+    }
+
+    // Calculate `deltaT`.
+    var deltaT = time - lastSynchronizedTime;
+    Debug.Assert(deltaT >= 0);
+
+    // Advance time forward.
+    this.runTimeForward(deltaT);
+    this.lastSynchronizedTime = time;
   }
 
-  class SimulationThread {
-    public BlockingCollection<SimAction> actions = new BlockingCollection<SimAction>();
-    public AutoResetEvent actionAvailable = new AutoResetEvent(false);
-    private HashSet<ISimulated> targets = new HashSet<ISimulated>();
-    private Thread thread = null;
 
-    public static SimulationThread Launch() {
-      var sim = new SimulationThread();
-      sim.thread = new Thread(sim.Run) {
-        Name = "[HGS] Simulation Thread",
-        IsBackground = true,
-      };
-      sim.thread.Start();
-      return sim;
-    }
+  /// <summary>
+  /// Simulate time forward by `deltaT` seconds.
+  /// </summary>
+  private void runTimeForward(double deltaT) {
+    // It may take multiple simulation steps to progress by `deltaT`.
+    while (deltaT > 0) {
+      // Firstly, ensure that our simulation is up to date.
+      stabilizeSimulationIfNeeded();
 
-    public void Shutdown() {
-      actions.CompleteAdding();
-      thread.Join();
-    }
+      // Find the largest time step that can be taken. This could be
+      // smaller than `deltaT` if we're constrained by a target needing
+      // multiple rounds of updates.
+      var deltaTStep = deltaT;
+      if (targets.Count > 0) {
+        var deltaTMin = targets.Min(t => t.RemainingValidDeltaT);
+        deltaTStep = Math.Min(deltaT, deltaTMin);
+      }
 
-    public void Synchronized() {
+      // Sanity check our forward step.
+      Debug.Assert(deltaTStep > 0);
+      Debug.Assert(deltaTStep <= deltaT);
+
       foreach (var target in targets) {
-        target.OnSynchronized();
+        target.Tick(deltaTStep);
       }
 
-      CompositeManager.Instance.OnSynchronized();
+      deltaT -= deltaTStep;
+      if (Math.Abs(deltaT) < EPSILON_TIME) {
+        deltaT = 0;
+      }
     }
+  }
 
-    private void Run() {
-      // Simulation running in a separate thread.
-      double pendingDeltaT = 0;
+  /// <summary>
+  /// Get each simulated system to a stable state, ready for time to step
+  /// forward.
+  /// </summary>
+  private void stabilizeSimulationIfNeeded() {
+    // It might take several iterations for systems to stabilize, as one
+    // system's stabilization may destabilize another.
+    while (true) {
+      // Check if any unstable targets exist.
+      var dirtyTargets = targets.Where(t => t.IsDirty).ToList();
+      if (dirtyTargets.Count == 0) {
+        // All targets are stable.
+        return;
+      }
 
-      foreach (var action in actions.GetConsumingEnumerable()) {
-        if (action is AdvanceTimeAction advance) {
-          pendingDeltaT += advance.DeltaT;
-          if (actions.Count > 0) {
-            // We want to coalesce multiple AdvanceTimeActions in order to take as few simulation
-            // steps as possible. If there are more actions to process, we simply record the
-            // cumulative Δt and continue processing.
-            continue;
+      // Recomputing state is potentially expensive, so it's parallelized.
+      // We track how many recomputations are outstanding in this round in
+      // order to await their completion.
+      var outstandingRecomputations = new CountdownEvent(dirtyTargets.Count);
+
+      foreach (var target in dirtyTargets) {
+        ThreadPool.QueueUserWorkItem(_ => {
+          try {
+            target.RecomputeState();
+          } finally {
+            outstandingRecomputations.Signal();
           }
-        }
-
-        // Before executing any actions, we need to bring the simulation up to the current time.
-        if (pendingDeltaT > 0) {
-          tickSimulation(pendingDeltaT);
-          pendingDeltaT = 0;
-        }
-
-        if (action is SyncAction sync) {
-          // A SyncAction is a request to notify the caller when the simulation has reached this
-          // point (all prior actions have been processed).
-          sync.SimulationDone.Set();
-        } else if (action is AddTargetAction add) {
-          targets.Add(add.Target);
-        }
+        });
       }
+
+      // Wait for all recomputation to finish. Note that some of the individual
+      // simulations may have marked others dirty again.
+      outstandingRecomputations.Wait();
     }
-
-    private void tickSimulation(double deltaT) {
-      // Ticking may require multiple steps, each of a smaller Δt than the overall goal.
-      while (deltaT > 0) {
-        ensureValidSimulationState();
-
-        var deltaTStep = deltaT;
-        if (targets.Count > 0) {
-          var deltaTConstraint = targets.Min(t => t.RemainingValidDeltaT);
-          deltaTStep = Math.Min(deltaT, deltaTConstraint);
-        }
-
-        Debug.Assert(deltaTStep > 0);
-        Debug.Assert(deltaTStep <= deltaT);
-
-        // Now that we know how long it's valid to tick the simulation for, tick all of the
-        // individual simulations. This operation is done in a single-threaded manner, since ticking
-        // a simulation should be a very fast operation.
-        foreach (var target in targets) {
-          target.Tick(deltaTStep);
-        }
-
-        deltaT -= deltaTStep;
-        if (Math.Abs(deltaT) < 1e-6) {
-          deltaT = 0;
-        }
-      }
-    }
-
-    /// <summary>
-    /// Ensure that every individual simulation is in a valid state to be advanced/ticked.
-    ///
-    /// This might involve recomputing the state of the simulation, perhaps more than once.
-    /// </summary>
-    private void ensureValidSimulationState() {
-      // It might take several iterations of recomputation before every simulation is valid.
-      while (true) {
-        var dirtyTargets = targets.Where(t => t.IsDirty).ToList();
-        if (dirtyTargets.Count == 0) {
-          return;
-        }
-
-        // Unlike the simple tick/advance operation, recomputing state is potentially expensive.
-        // Therefore, we push the work of recomputation into a thread pool to parallelize it as
-        // much as possible.
-
-        // Track how many recomputation operations are in progress, so that we can wait for them all
-        // to finish later.
-        var recomputing = new CountdownEvent(dirtyTargets.Count);
-
-        foreach (var target in dirtyTargets) {
-          ThreadPool.QueueUserWorkItem(_ => {
-            try {
-              target.RecomputeState();
-            } finally {
-              recomputing.Signal();
-            }
-          });
-        }
-
-        // Wait for all recomputation to finish. Note that some of the individual simulations may
-        // have marked others dirty again.
-        recomputing.Wait();
-      }
-    }
-  }
-
-  abstract record SimAction {}
-
-  record AdvanceTimeAction : SimAction {
-    public double DeltaT;
-  }
-
-  record SyncAction : SimAction {
-    public ManualResetEventSlim SimulationDone;
-  }
-
-  record AddTargetAction : SimAction {
-    public ISimulated Target;
   }
 }

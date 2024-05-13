@@ -1,7 +1,5 @@
 using System;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
-using Hgs.Core;
 using Hgs.Core.Simulation;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -13,13 +11,10 @@ public class SimulationDriverTest {
 
   [TestInitialize]
   public void TestInitialize() {
-    if (SimulationDriver.Instance != null) {
-      SimulationDriver.Instance.Shutdown();
-    }
     SimulationDriver.Instance = new SimulationDriver();
     // Start at t = 10
     // TODO: mock time properly
-    SimulationDriver.Instance.RaiseUpperBoundOfTime(10);
+    SimulationDriver.Instance.Sync(10);
   }
 
   [TestMethod]
@@ -28,14 +23,12 @@ public class SimulationDriverTest {
     SimulationDriver.Instance.AddTarget(target);
 
     // Ticking the test by 5s should produce a value of 5.
-    SimulationDriver.Instance.RaiseUpperBoundOfTime(15);
-    SimulationDriver.Instance.Sync();
+    SimulationDriver.Instance.Sync(15);
     AssertWithinEpsilon(5, target.Value);
 
     // Ticking the test by 10s should cause a recalculation after 5s, and `Value` should be
     // (10, for the first 10s) + (10, for the second 5s) = 20.
-    SimulationDriver.Instance.RaiseUpperBoundOfTime(25);
-    SimulationDriver.Instance.Sync();
+    SimulationDriver.Instance.Sync(25);
     AssertWithinEpsilon(20, target.Value);
   }
 

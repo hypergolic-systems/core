@@ -17,12 +17,11 @@ public class ElectricTest {
   public void TestInitialize() {
     Adapter.Instance = new FakeKSPAdapter();
     SimulationDriver.Initialize();
-    SimulationDriver.Instance.RaiseUpperBoundOfTime(10);
+    SimulationDriver.Instance.Sync(10);
   }
 
   [TestCleanup]
   public void TestCleanup() {
-    SimulationDriver.Instance.Shutdown();
     SimulationDriver.Instance = null;
   }
 
@@ -41,13 +40,11 @@ public class ElectricTest {
     var battery = composite.partMap[batteryPart.persistentId].components.OfType<Battery>().First();
 
     // Advance 10 seconds
-    SimulationDriver.Instance.RaiseUpperBoundOfTime(15);
-    SimulationDriver.Instance.Sync();
+    SimulationDriver.Instance.Sync(15);
 
     Util.AssertWithinEpsilon(50, battery.Stored);
 
-    SimulationDriver.Instance.RaiseUpperBoundOfTime(115);
-    SimulationDriver.Instance.Sync();
+    SimulationDriver.Instance.Sync(115);
 
     Util.AssertWithinEpsilon(100, battery.Stored);
   }
