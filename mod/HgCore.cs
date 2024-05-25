@@ -1,12 +1,13 @@
 using System;
 using Hgs.Core;
 using Hgs.Core.Simulation;
-using Hgs.Core.Virtual;
 using UnityEngine;
+using Hgs.Core.RemoteUi;
+using Hgs.Mod.Rpc;
 
 namespace Hgs.Mod.Virtual;
 [KSPAddon(KSPAddon.Startup.AllGameScenes, true)]
-public class HgSimulator : MonoBehaviour {
+public class HgCore : MonoBehaviour {
 
   protected static uint MAX_TIME_DELTA = 3600;
 
@@ -18,7 +19,7 @@ public class HgSimulator : MonoBehaviour {
     }
   }
 
-  public HgSimulator() {
+  public HgCore() {
     DontDestroyOnLoad(this);
     Adapter.Instance = new KspAdapter();
   }
@@ -27,6 +28,8 @@ public class HgSimulator : MonoBehaviour {
     GameEvents.onGameStatePostLoad.Add(OnGameLoaded);
     GameEvents.onVesselWasModified.Add(OnVesselWasModified);
     SimulationDriver.Initialize();
+    RemoteUiServer.Initialize();
+    RemoteUiServer.RegisterHandler("/status", (ctx) => new StatusRequest(ctx));
   }
 
   public void FixedUpdate() {
@@ -43,14 +46,14 @@ public class HgSimulator : MonoBehaviour {
     }
 
     var totalDelta = (uint)(CurrentWorldTime - LastUpdateTime);
-    if (totalDelta == 0) {
-      // No update needed.
-      return;
+    if (totalDelta != 0) {
+      LastUpdateTime = CurrentWorldTime;
+      SimulationDriver.Instance.Sync(LastUpdateTime);
     }
 
-    LastUpdateTime = CurrentWorldTime;
-    SimulationDriver.Instance.RaiseUpperBoundOfTime(LastUpdateTime);
-    SimulationDriver.Instance.Sync();
+    while (RemoteUiServer.Instance.Requests.TryDequeue(out var request)) {
+      request.Run();
+    }
   }
 
   public void OnGameLoaded(ConfigNode _) {

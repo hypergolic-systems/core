@@ -7,7 +7,7 @@ namespace Hgs.Core.System.Electrical.Components;
 
 public class RadioisotopeThermalGenerator : VirtualComponent {
 
-  private ResourceFlow flow;
+  public ResourceFlow flow;
 
   public override void OnAttached(Composite composite) {
     base.OnAttached(composite);

@@ -1,5 +1,8 @@
 using System.Collections.Generic;
+using System.Runtime.Serialization.Json;
+using EdyCommonTools;
 using Hgs.Core;
+using UnityEngine;
 
 namespace Hgs.Mod;
 
@@ -60,7 +63,15 @@ public class KspAdapter : IAdapter {
     return HighLogic.CurrentGame.UniversalTime;
   }
 
+  public double Planetarium_UniversalTime() {
+    return Planetarium.GetUniversalTime();
+  }
+
   public void Log(string message) {
     UnityEngine.Debug.Log("[HGS] " + message);
+  }
+
+  public string JsonSerialize(object obj) {
+    return MiniJSON.jsonEncode(obj);
   }
 }

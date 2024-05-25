@@ -32,7 +32,7 @@ public class Adapter {
   public static object Vessel_rootPart(object vessel) {
     return Instance.Vessel_rootPart(vessel);
   }
-  
+
   public static T Part_FindModuleImplementing<T>(object part) where T: class {
     return Instance.Part_FindModuleImplementing<T>(part);
   }
@@ -61,8 +61,16 @@ public class Adapter {
     return Instance.Game_UniversalTime();
   }
 
+  public static double Planetarium_UniversalTime() {
+    return Instance.Planetarium_UniversalTime();
+  }
+
   public static void Log(string message) {
     Instance.Log(message);
+  }
+
+  public static string JsonSerialize(object obj) {
+    return Instance.JsonSerialize(obj);
   }
 }
 
@@ -94,5 +102,9 @@ public interface IAdapter {
 
   public double Game_UniversalTime();
 
+  public double Planetarium_UniversalTime();
+
   public void Log(string message);
+
+  public string JsonSerialize(object obj);
 }

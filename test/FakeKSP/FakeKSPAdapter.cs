@@ -63,7 +63,16 @@ public class FakeKSPAdapter : IAdapter
     return 0;
   }
 
+  public double Planetarium_UniversalTime() {
+    return 0;
+  }
+
   public void Log(string message) {
     Console.WriteLine(message);
+  }
+
+  public string JsonSerialize(object obj) {
+    // TODO: non-Unity serialization?
+    return "null";
   }
 }

@@ -29,6 +29,7 @@ public class CompositeManager {
 
   public Composite OnLoadVessel(object vessel) {
     var id = Adapter.Vessel_persistentId(vessel);
+    Adapter.Log($"Loading vessel {id}");
     // `vessel` was just loaded physically, and now has parts.
     if (!composites.ContainsKey(id)) {
       // This vessel has never before been seen, so create it freshly from the parts themselves.

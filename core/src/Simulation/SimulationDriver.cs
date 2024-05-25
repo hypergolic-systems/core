@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using Hgs.Core.Virtual;
 
 namespace Hgs.Core.Simulation;
 
@@ -39,6 +40,11 @@ public class SimulationDriver {
     // Advance time forward.
     this.runTimeForward(deltaT);
     this.lastSynchronizedTime = time;
+
+    foreach (var target in targets) {
+      target.OnSynchronized();
+    }
+    CompositeManager.Instance.OnSynchronized();
   }
 
 
