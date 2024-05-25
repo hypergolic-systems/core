@@ -28,3 +28,20 @@ jobs:
       run: dotnet build test --no-restore
     - name: Tests
       run: dotnet test --no-build --verbosity normal
+
+  build-ui:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Use Node.JS 20.10.0
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.10.0
+    - name: Install dependencies
+      working-directory: ./ui
+      run: npm install
+    - name: Build
+      working-directory: ./ui
+      run: npm run build
