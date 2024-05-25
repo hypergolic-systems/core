@@ -30,6 +30,9 @@ public class HgCore : MonoBehaviour {
     SimulationDriver.Initialize();
     RemoteUiServer.Initialize();
     RemoteUiServer.RegisterHandler("/status", (ctx) => new StatusRequest(ctx));
+    GameEvents.onVesselUnloaded.Add((vessel) => {
+      Debug.Log($"Vessel {vessel.persistentId} / ${vessel.GetDisplayName()} unload event");
+    });
   }
 
   public void FixedUpdate() {

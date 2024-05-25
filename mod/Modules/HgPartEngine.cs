@@ -8,7 +8,7 @@ public class HgPartEngine : HgPartBase {
     throw new System.NotImplementedException();
   }
 
-  public override void InitializeComponents(Composite composite, VirtualPart part) {
+  public override void InitializeComponents(VirtualVessel virtualVessel, VirtualPart part) {
     // Implement the logic for InitializeComponents method here.
     throw new System.NotImplementedException();
   }

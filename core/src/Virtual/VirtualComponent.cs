@@ -1,6 +1,4 @@
 
-using System;
-
 namespace Hgs.Core.Virtual;
 
 public abstract class VirtualComponent {
@@ -15,5 +13,5 @@ public abstract class VirtualComponent {
 
   public virtual void Load(object node) {}
 
-  public virtual void OnAttached(Composite composite) {}
+  public virtual void OnAttached(VirtualVessel virtualVessel) {}
 }

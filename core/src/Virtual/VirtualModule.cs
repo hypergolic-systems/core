@@ -1,7 +1,3 @@
-using Hgs.Core.Virtual;
-using System;
-using System.Collections.Generic;
-
 namespace Hgs.Core.Virtual;
 
 public interface VirtualModule {
@@ -13,11 +9,11 @@ public interface VirtualModule {
   public VirtualPart virtualPart { get; set; }
 
   public abstract bool OwnsComponent(VirtualComponent component);
-  public abstract void OnLinkToSpacecraft(Composite sc);
+  public abstract void OnLinkToSpacecraft(VirtualVessel sc);
 
-  public abstract void OnUnlinkFromSpacecraft(Composite sc);
+  public abstract void OnUnlinkFromSpacecraft(VirtualVessel sc);
 
-  public abstract void InitializeComponents(Composite sc, VirtualPart part);
+  public abstract void InitializeComponents(VirtualVessel sc, VirtualPart part);
 
   public abstract void OnSynchronized();
 }

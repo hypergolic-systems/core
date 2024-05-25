@@ -1,6 +1,4 @@
-using System;
 using Hgs.Core.Virtual;
-using Hgs.Core.System.Electrical;
 using Hgs.Core.Simulation;
 
 namespace Hgs.Core.System.Electrical.Components;
@@ -27,9 +25,9 @@ public class Battery : VirtualComponent {
     Adapter.ConfigNode_Set(node, "capacity", Capacity.ToString());
   }
 
-  public override void OnAttached(Composite composite) {
-    base.OnAttached(composite);
-    this.flow = composite.resources[WellKnownResource.Electricity].NewFlow();
+  public override void OnAttached(VirtualVessel virtualVessel) {
+    base.OnAttached(virtualVessel);
+    this.flow = virtualVessel.resources[WellKnownResource.Electricity].NewFlow();
     this.flow.Name = $"Battery({partId})";
     this.flow.CanProduceRate = Stored > 0 ? 10 : 0;
     this.flow.CanConsumeRate = Stored < Capacity ? 10 : 0;

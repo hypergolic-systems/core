@@ -1,18 +1,17 @@
 
-using System.Diagnostics;
 using Hgs.Core.Virtual;
 
 namespace Hgs.Mod.Virtual {
 
   /**
-   * Provides the link between the simulated version of a `Spacecraft` with `SimulatedPart`s
+   * Provides the link between a `Vessel` and its corresponding `VirtualVessel`
    * and the game version of `Vessel`s.
    */
-  public class HgSpacecraftVesselModule : VesselModule {
+  public class HgVirtualVesselModule : VesselModule {
     /**
-     * The `Composite` associated with this vessel, or `null` if none exists.
+     * The `VirtualVessel` associated with this vessel, or `null` if none exists.
      */
-    public Composite composite;
+    public VirtualVessel virtualVessel;
 
     protected override void OnAwake() {
       base.OnAwake();
@@ -25,17 +24,17 @@ namespace Hgs.Mod.Virtual {
         return;
       }
 
-      CompositeManager.Instance.OnLoadVessel(vessel);
+      VirtualVesselManager.Instance.OnLoadVessel(vessel);
     }
 
     public override void OnUnloadVessel() {
-      CompositeManager.Instance.OnUnloadVessel(vessel);
+      VirtualVesselManager.Instance.OnUnloadVessel(vessel);
       base.OnUnloadVessel();
     }
 
     protected override void OnLoad(ConfigNode node) {
       base.OnLoad(node);
-      CompositeManager.Instance.OnLoadVesselConfig(node);
+      VirtualVesselManager.Instance.OnLoadVesselConfig(node);
     }
 
     protected override void OnSave(ConfigNode node) {

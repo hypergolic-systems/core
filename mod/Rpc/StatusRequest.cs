@@ -1,14 +1,11 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using Hgs.Core;
 using Hgs.Core.RemoteUi;
 using Hgs.Core.System.Electrical.Components;
 using Hgs.Core.Virtual;
 using Hgs.Mod.Modules;
-using UnityEngine.SceneManagement;
 
 namespace Hgs.Mod.Rpc;
 
@@ -30,7 +27,9 @@ public class StatusRequest : BaseRequest {
     {
       { "id", vessel.persistentId.ToString() },
       { "name", vessel.vesselName },
-      { "type", vessel.vesselType.ToString() }
+      { "type", vessel.vesselType.ToString() },
+      { "loaded", vessel.loaded },
+      { "situation", vessel.situation.ToString() },
     };
     if (vessel.parts != null) {
       vdata["parts"] = vessel.parts.Select(serializePart).ToArray();

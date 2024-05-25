@@ -44,7 +44,7 @@ public class SimulationDriver {
     foreach (var target in targets) {
       target.OnSynchronized();
     }
-    CompositeManager.Instance.OnSynchronized();
+    VirtualVesselManager.Instance.OnSynchronized();
   }
 
 

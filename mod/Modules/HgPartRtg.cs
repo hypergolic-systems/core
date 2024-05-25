@@ -7,7 +7,7 @@ public class HgPartRtg : HgPartBase {
   [KSPField]
   public int power = 0;
 
-  public override void InitializeComponents(Composite sc, VirtualPart part) {
+  public override void InitializeComponents(VirtualVessel sc, VirtualPart part) {
     var rtg = new RadioisotopeThermalGenerator {
       partId = this.part.persistentId,
       // WattsPerSecond = power,

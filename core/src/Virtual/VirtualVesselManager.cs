@@ -1,39 +1,37 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using Hgs.Core.Simulation;
 
 namespace Hgs.Core.Virtual;
 
 /// <summary>
-/// Manages `Composite` instances, which are the virtual representations of physical
+/// Manages `VirtualVessel` instances, which are the virtual representations of physical
 /// vessels.
 /// </summary>
-public class CompositeManager {
+public class VirtualVesselManager {
 
-  protected Dictionary<uint, Composite> composites = new();
+  protected Dictionary<uint, VirtualVessel> composites = new();
   protected Dictionary<string, Type> componentTypes = new();
 
 
-  public static CompositeManager Instance = new CompositeManager();
+  public static VirtualVesselManager Instance = new VirtualVesselManager();
 
   public void RegisterComponentType(Type type) {
     componentTypes[type.FullName] = type;
   }
 
-  public Composite GetSpacecraft(object vessel) {
+  public VirtualVessel GetSpacecraft(object vessel) {
     var vesselId = Adapter.Vessel_persistentId(vessel);
     return composites.ContainsKey(vesselId) ? composites[vesselId] : null;
   }
 
-  public Composite OnLoadVessel(object vessel) {
+  public VirtualVessel OnLoadVessel(object vessel) {
     var id = Adapter.Vessel_persistentId(vessel);
-    Adapter.Log($"Loading vessel {id}");
     // `vessel` was just loaded physically, and now has parts.
     if (!composites.ContainsKey(id)) {
       // This vessel has never before been seen, so create it freshly from the parts themselves.
-      composites[id] = new Composite(id);
+      composites[id] = new VirtualVessel(id);
     }
 
     var composite = composites[id];
@@ -92,6 +90,7 @@ public class CompositeManager {
   }
 
   public void OnUnloadVessel(object vessel) {
+    Adapter.Log($"Unloading vessel {Adapter.Vessel_persistentId(vessel)}");
     var id = Adapter.Vessel_persistentId(vessel);
     if (!composites.ContainsKey(id)) {
       return;
@@ -115,16 +114,16 @@ public class CompositeManager {
     }
 
     var id = uint.Parse(Adapter.ConfigNode_Get(compositeNode, "id"));
-    var composite = new Composite(id);
+    var composite = new VirtualVessel(id);
     composites[id] = composite;
 
     this.LoadStructureFromConfig(composite, compositeNode);
   }
 
-  protected void LoadStructureFromConfig(Composite composite, object node) {
+  protected void LoadStructureFromConfig(VirtualVessel composite, object node) {
     foreach (var craftNode in Adapter.ConfigNode_GetNodes(node, "SPACECRAFT")) {
       var craft = new Spacecraft {
-        composite = composite,
+        virtualVessel = composite,
       };
       composite.spacecraft.Add(craft);
 
@@ -158,7 +157,7 @@ public class CompositeManager {
   /// <summary>
   /// Extracts the structure of a `Composite` from the live parts.
   /// </summary>
-  protected void LoadStructureFromVessel(Composite composite, object vessel) {
+  protected void LoadStructureFromVessel(VirtualVessel composite, object vessel) {
     composite.Clear();
     var rootCraft = new Spacecraft();
     composite.spacecraft.Add(rootCraft);
@@ -174,7 +173,7 @@ public class CompositeManager {
   /// Add `part` (including all of its descendents) to the `Composite` tree, creating new
   /// spacecraft or segments if needed.
   /// </summary>
-  protected void IngestPartIntoSegmentTree(Composite composite, Spacecraft craft, Segment segment, object part, object fromPart) {
+  protected void IngestPartIntoSegmentTree(VirtualVessel composite, Spacecraft craft, Segment segment, object part, object fromPart) {
     var segmentForThisPart = segment;
     var segmentForChildParts = segment;
 

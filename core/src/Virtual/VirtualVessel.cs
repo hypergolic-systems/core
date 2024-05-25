@@ -4,7 +4,7 @@ using Hgs.Core.Simulation;
 
 namespace Hgs.Core.Virtual;
 
-public class Composite {
+public class VirtualVessel {
   public uint id;
 
   public bool IsDirty { get; set; } = true;
@@ -18,7 +18,7 @@ public class Composite {
 
   public object liveVessel = null;
 
-  public Composite(uint vesselId) {
+  public VirtualVessel(uint vesselId) {
     this.id = vesselId;
 
     resources.Add(WellKnownResource.Electricity, new ResourceSystem(new ElectricFlowResolver()));
