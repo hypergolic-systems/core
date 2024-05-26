@@ -1,6 +1,5 @@
 using System.Linq;
 using Hgs.Core.System.Electrical.Components;
-using Hgs.Core.Virtual;
 
 namespace Hgs.Mod.Modules;
 
@@ -16,28 +15,33 @@ public class HgPartBattery : HgPartBase {
 
   public Battery battery = null;
 
-  public override void InitializeComponents(VirtualVessel sc, VirtualPart part) {
-    var battery = new Battery {
-      partId = this.part.persistentId,
-    };
-    battery.InitializeCapacity(capacity);
-    part.AddComponent(battery);
+  public override void OnAwake() {
+    base.OnAwake();
   }
 
-  public override void OnLinkToSpacecraft(VirtualVessel sc) {
+  public override void OnStart(StartState state) {
+    base.OnStart(state);
+    UnityEngine.Debug.Log($"[HGS] HgPartBattery OnStart in state {state}");
     this.battery = this.virtualPart.components.OfType<Battery>().First();
-    (Fields["StoredEnergy"].uiControlEditor as UI_ProgressBar).maxValue = (float) battery.Capacity;
-    (Fields["StoredEnergy"].uiControlFlight as UI_ProgressBar).maxValue = (float) battery.Capacity;
+    (Fields["StoredEnergy"].uiControlEditor as UI_ProgressBar).maxValue = (float) capacity;
+    (Fields["StoredEnergy"].uiControlFlight as UI_ProgressBar).maxValue = (float) capacity;
+    if (IsInEditor) {
+      StoredEnergy = (float) battery.Stored;
+      Fields["StoredEnergy"].OnValueModified += (_) => {
+        battery.Stored = (double) StoredEnergy;
+      };
+    }
+  }
+
+  protected override void InitializeComponents() {
+    UnityEngine.Debug.Log($"[HGS] {GetType().Name} InitializeComponents");
+    virtualPart.AddComponent(new Battery {
+      Capacity = capacity,
+      Stored = capacity,
+    });
   }
 
   public override void OnSynchronized() {
     StoredEnergy = (float) battery.Stored;
-  }
-
-  public override void OnUnlinkFromSpacecraft(VirtualVessel sc) {
-  }
-
-  public override bool OwnsComponent(VirtualComponent component) {
-    return component is Battery;
   }
 }

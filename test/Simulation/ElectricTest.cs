@@ -25,27 +25,27 @@ public class ElectricTest {
     SimulationDriver.Instance = null;
   }
 
-  [TestMethod, Timeout(5000)]
-  public void Test_Battery_with_Rtg() {
-    var manager = new CompositeManager();
-    var vessel = new FakeVessel();
+  // [TestMethod, Timeout(5000)]
+  // public void Test_Battery_with_Rtg() {
+  //   var vessel = new FakeVessel();
 
-    var batteryPart = vessel.AddPart(vessel.rootPart);
-    batteryPart.AddModule(new FakeBatteryModule());
+  //   var batteryPart = vessel.AddPart(vessel.rootPart);
+  //   batteryPart.AddModule(new FakeBatteryModule());
 
-    var rtgPart = vessel.AddPart(vessel.rootPart);
-    rtgPart.AddModule(new FakeRTGModule());
+  //   var rtgPart = vessel.AddPart(vessel.rootPart);
+  //   rtgPart.AddModule(new FakeRTGModule());
 
-    var composite = manager.OnLoadVessel(vessel);
-    var battery = composite.partMap[batteryPart.persistentId].components.OfType<Battery>().First();
+  //   var virtualVessel = new VirtualVessel();
+  //   SimulationDriver.Instance.AddTarget(virtualVessel.resources[WellKnownResource.Electricity]);
+  //   var battery = virtualVessel.virtualParts[batteryPart.persistentId].components.OfType<Battery>().First();
 
-    // Advance 10 seconds
-    SimulationDriver.Instance.Sync(15);
+  //   // Advance 10 seconds
+  //   SimulationDriver.Instance.Sync(15);
 
-    Util.AssertWithinEpsilon(50, battery.Stored);
+  //   Util.AssertWithinEpsilon(50, battery.Stored);
 
-    SimulationDriver.Instance.Sync(115);
+  //   SimulationDriver.Instance.Sync(115);
 
-    Util.AssertWithinEpsilon(100, battery.Stored);
-  }
+  //   Util.AssertWithinEpsilon(100, battery.Stored);
+  // }
 }

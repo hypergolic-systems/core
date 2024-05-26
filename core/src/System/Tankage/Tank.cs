@@ -1,3 +1,4 @@
+using System;
 using Hgs.Core.Virtual;
 
 namespace Hgs.Core.System.Tankage;
@@ -20,15 +21,17 @@ public class Tank : VirtualComponent {
     return this.volume;
   }
 
-  public override void Load(object node) {
-    base.Load(node);
+  protected override void Load(object node) {
     this.amount = float.Parse(Adapter.ConfigNode_Get(node, "amount"));
     this.volume = float.Parse(Adapter.ConfigNode_Get(node, "volume"));
   }
 
-  public override void Save(object node) {
+  protected override void Save(object node) {
     Adapter.ConfigNode_Set(node, "amount", this.amount.ToString());
     Adapter.ConfigNode_Set(node, "volume", this.volume.ToString());
-    base.Save(node);
+  }
+
+  public override void OnActivate(VirtualVessel virtualVessel) {
+    throw new NotImplementedException();
   }
 }

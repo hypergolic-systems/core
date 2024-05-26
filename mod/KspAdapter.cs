@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Runtime.Serialization.Json;
 using EdyCommonTools;
 using Hgs.Core;
 using UnityEngine;
@@ -7,6 +6,14 @@ using UnityEngine;
 namespace Hgs.Mod;
 
 public class KspAdapter : IAdapter {
+
+  static KspAdapter() {
+    if (Adapter.Instance == null) {
+      Debug.Log("[HGS] KspAdapter is being initialized.");
+      Adapter.Instance = new KspAdapter();
+    }
+  }
+
   public string ConfigNode_Get(object nodeObj, string name) {
     return (nodeObj as ConfigNode).GetValue(name);
   }

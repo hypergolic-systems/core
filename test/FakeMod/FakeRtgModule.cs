@@ -4,7 +4,7 @@ using Hgs.Core.Virtual;
 using Hgs.Test.FakeKSP;
 
 namespace Hgs.Test.FakeMod;
-public class FakeRTGModule : FakePartModule, VirtualModule
+public class FakeRTGModule : FakePartModule, IVirtualPartModule
 {
   public object module => this;
 
@@ -12,14 +12,15 @@ public class FakeRTGModule : FakePartModule, VirtualModule
 
   public VirtualPart virtualPart { get; set; }
 
-  public void InitializeComponents(Composite composite, VirtualPart part) {
+  public void InitializeComponents(VirtualVessel virtualVessel, VirtualPart part) {
     var rtg = new RadioisotopeThermalGenerator {
-      partId = this.part.persistentId,
+      part = part,
+      index = 0,
     };
     part.AddComponent(rtg);
   }
 
-  public void OnLinkToSpacecraft(Composite sc) {
+  public void OnLinkToSpacecraft(VirtualVessel sc) {
   }
 
   public void OnSimulationUpdate(uint delta) {
@@ -28,7 +29,7 @@ public class FakeRTGModule : FakePartModule, VirtualModule
   public void OnSynchronized() {
   }
 
-  public void OnUnlinkFromSpacecraft(Composite sc) {
+  public void OnUnlinkFromSpacecraft(VirtualVessel sc) {
   }
 
   public bool OwnsComponent(VirtualComponent component) {

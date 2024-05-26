@@ -11,146 +11,34 @@ namespace Hgs.Core.Virtual;
 /// </summary>
 public class VirtualVesselManager {
 
-  protected Dictionary<uint, VirtualVessel> composites = new();
-  protected Dictionary<string, Type> componentTypes = new();
-
+  protected Dictionary<uint, VirtualVessel> virtualVessels = new();
 
   public static VirtualVesselManager Instance = new VirtualVesselManager();
 
-  public void RegisterComponentType(Type type) {
-    componentTypes[type.FullName] = type;
-  }
-
-  public VirtualVessel GetSpacecraft(object vessel) {
-    var vesselId = Adapter.Vessel_persistentId(vessel);
-    return composites.ContainsKey(vesselId) ? composites[vesselId] : null;
-  }
-
-  public VirtualVessel OnLoadVessel(object vessel) {
+  public void OnDestroyVessel(object vessel) {
     var id = Adapter.Vessel_persistentId(vessel);
-    // `vessel` was just loaded physically, and now has parts.
-    if (!composites.ContainsKey(id)) {
-      // This vessel has never before been seen, so create it freshly from the parts themselves.
-      composites[id] = new VirtualVessel(id);
+    Adapter.Log($"Destroying vessel {id}");
+    if (!virtualVessels.ContainsKey(id)) {
+      return;
     }
 
-    var composite = composites[id];
-    composite.liveVessel = vessel;
-    composite.Clear();
-    this.LoadStructureFromVessel(composite, vessel);
+    virtualVessels.Remove(id);
 
-    // Keep track of which parts were here from the start, so we know which ones didn't match any
-    // `SimulatedModule`s and should be removed.
-    var existingVirtualParts = new HashSet<uint>(composite.partMap.Keys);
-
-    // Keep track of which parts were newly created. That's because we need to initialize those
-    // parts when we find `SimulatedModule`s for them.
-    var newParts = new HashSet<uint>();
-
-    foreach (var module in Adapter.Vessel_FindPartModulesImplementing<VirtualModule>(vessel)) {
-      var partId = Adapter.Part_persistentId(module.gamePart);
-
-      if (!composite.partMap.ContainsKey(partId)) {
-        composite.partMap[partId] = new VirtualPart {
-          id = partId,
-        };
-      }
-
-      var part = composite.partMap[partId];
-      module.virtualPart = part;
-      if (!part.components.Any(component => module.OwnsComponent(component))) {
-        // This module owns no components on this part, so see if it wants to create some.
-        module.InitializeComponents(composite, part);
-      }
-
-      // Associate the module with the components it owns.
-      foreach (var component in part.components) {
-        if (module.OwnsComponent(component)) {
-          component.virtualModule = module;
-        }
-        component.OnAttached(composite);
-      }
- 
-      module.OnLinkToSpacecraft(composite);
-      existingVirtualParts.Remove(partId);
+    foreach (var resource in virtualVessels[id].resources.Values) {
+      SimulationDriver.Instance.RemoveTarget(resource);
     }
-
-    foreach (var oldPartId in existingVirtualParts) {
-      // These parts didn't have corresponding physical parts. Remove them from the spacecraft.
-      composite.partMap.Remove(oldPartId);
-    }
-
-    if (SimulationDriver.Instance != null) {
-      foreach (var resource in composite.resources.Values) {
-        SimulationDriver.Instance.AddTarget(resource);
-      }
-    }
-
-    return composite;
   }
 
   public void OnUnloadVessel(object vessel) {
-    Adapter.Log($"Unloading vessel {Adapter.Vessel_persistentId(vessel)}");
     var id = Adapter.Vessel_persistentId(vessel);
-    if (!composites.ContainsKey(id)) {
+    if (!virtualVessels.ContainsKey(id)) {
       return;
     }
 
-    var composite = composites[id];
-    foreach (var module in Adapter.Vessel_FindPartModulesImplementing<VirtualModule>(vessel)) {
-      module.OnUnlinkFromSpacecraft(composite);
-      foreach (var component in module.virtualPart.components) {
-        component.virtualModule = null;
-      }
-    }
-    composite.liveVessel = null;
-  }
-
-  public void OnLoadVesselConfig(object node) {
-    var compositeNode = Adapter.ConfigNode_Get(node, "HGS_COMPOSITE");
-    if (compositeNode == null) {
-      // There is no serialized Composite associated with this vessel (yet).
-      return;
-    }
-
-    var id = uint.Parse(Adapter.ConfigNode_Get(compositeNode, "id"));
-    var composite = new VirtualVessel(id);
-    composites[id] = composite;
-
-    this.LoadStructureFromConfig(composite, compositeNode);
-  }
-
-  protected void LoadStructureFromConfig(VirtualVessel composite, object node) {
-    foreach (var craftNode in Adapter.ConfigNode_GetNodes(node, "SPACECRAFT")) {
-      var craft = new Spacecraft {
-        virtualVessel = composite,
-      };
-      composite.spacecraft.Add(craft);
-
-      foreach (var segmentNode in Adapter.ConfigNode_GetNodes(craftNode, "SEGMENT")) {
-        var definingPart = uint.Parse(Adapter.ConfigNode_Get(segmentNode, "definingPart"));
-        var segment = new Segment(craft, definingPart);
-        craft.segmentsByDefiningPart[definingPart] = segment;
-
-        foreach (var partNode in Adapter.ConfigNode_GetNodes(segment, "PART")) {
-          var part = new VirtualPart {
-            id = uint.Parse(Adapter.ConfigNode_Get(partNode, "id")),
-          };
-          foreach (var componentNode in Adapter.ConfigNode_GetNodes(partNode, "COMPONENT")) {
-            var typeString = Adapter.ConfigNode_Get(partNode, "type");
-            if (!componentTypes.ContainsKey(typeString)) {
-              throw new Exception(string.Format("Unknown VirtualComponent type: {0}", typeString));
-            }
-
-            var component = (VirtualComponent) Activator.CreateInstance(componentTypes[typeString]);
-            component.partId = part.id;
-            component.index = int.Parse(Adapter.ConfigNode_Get(partNode, "index"));
-
-            segment.parts[part.id] = part;
-            composite.partMap[part.id] =  part;
-          }
-        }
-      }
+    var liveVessel = virtualVessels[id];
+    foreach (var part in liveVessel.virtualParts.Values) {
+      // Disconnect the VirtualPart from the 
+      part.virtualModule = null;
     }
   }
 
@@ -243,7 +131,7 @@ public class VirtualVesselManager {
   }
 
   public void OnSynchronized() {
-    foreach (var composite in composites.Values) {
+    foreach (var composite in virtualVessels.Values) {
       composite.OnSynchronized();
     }
   }

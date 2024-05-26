@@ -10,35 +10,25 @@ public class Battery : VirtualComponent {
 
   public ResourceFlow flow;
 
-  public override void Load(object node) {
-    base.Load(node);
+  protected override void Load(object node) {
     Stored = int.Parse(Adapter.ConfigNode_Get(node, "stored"));
     Capacity = int.Parse(Adapter.ConfigNode_Get(node, "capacity"));
-    flow.ActiveRate = 0;
-    flow.CanProduceRate = 0;
-    flow.CanConsumeRate = 10;
   }
 
-  public override void Save(object node) {
-    base.Save(node);
+  protected override void Save(object node) {
     Adapter.ConfigNode_Set(node, "stored", Stored.ToString());
     Adapter.ConfigNode_Set(node, "capacity", Capacity.ToString());
   }
 
-  public override void OnAttached(VirtualVessel virtualVessel) {
-    base.OnAttached(virtualVessel);
+  public override void OnActivate(VirtualVessel virtualVessel) {
+    Adapter.Log("Battery.OnActivate");
     this.flow = virtualVessel.resources[WellKnownResource.Electricity].NewFlow();
-    this.flow.Name = $"Battery({partId})";
+    this.flow.Name = $"Battery({part.id})";
     this.flow.CanProduceRate = Stored > 0 ? 10 : 0;
     this.flow.CanConsumeRate = Stored < Capacity ? 10 : 0;
     this.flow.StorageTier = 5;
     this.flow.OnFlow = OnFlow;
     this.flow.OnSetActiveRate = OnSetActiveRate;
-  }
-
-  public void InitializeCapacity(int watts) {
-    Stored = 0;
-    Capacity = watts;
   }
 
   public void OnFlow(double amount) {

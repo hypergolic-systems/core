@@ -32,6 +32,7 @@ public class ResourceSystem(ResourceSystem.IFlowResolver director) : ISimulated 
   public ResourceFlow NewFlow() {  
     var flow = new ResourceFlow(this);
     flows.Add(flow);
+    this.IsDirty = true;
     return flow;
   }
 

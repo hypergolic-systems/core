@@ -24,8 +24,8 @@ public class FakePart {
     return modules.OfType<T>().ToList();
   }
 
-  public T GetSimulatedComponent<T>(Composite composite) where T: class {
-    return composite.partMap[persistentId].components.OfType<T>().First();
+  public T GetSimulatedComponent<T>(VirtualVessel virtualVessel) where T: class {
+    return virtualVessel.virtualParts[persistentId].components.OfType<T>().First();
   }
 
   public void AddModule(FakePartModule module) {

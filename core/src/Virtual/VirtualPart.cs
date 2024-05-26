@@ -6,10 +6,16 @@ public class VirtualPart {
 
   public uint id;
 
+  public Spacecraft spacecraft;
+
+  public IVirtualPartModule virtualModule;
+
   public List<VirtualComponent> components = new();
 
-  public void AddComponent(VirtualComponent component) {
+  public VirtualComponent AddComponent(VirtualComponent component) {
+    component.part = this;
     component.index = components.Count;
     components.Add(component);
+    return component;
   }
 }

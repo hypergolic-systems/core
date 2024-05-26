@@ -25,6 +25,10 @@ public class SimulationDriver {
     targets.Add(target);
   }
 
+  public void RemoveTarget(ISimulated target) {
+    targets.Remove(target);
+  }
+
   public void Sync(double time) {
     if (lastSynchronizedTime == 0) {
       // This is our first synchronization, so capture the current
