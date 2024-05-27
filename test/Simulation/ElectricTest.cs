@@ -1,11 +1,5 @@
 
-using System.Linq;
-using Hgs.Core;
-using Hgs.Core.Simulation;
-using Hgs.Core.System.Electrical.Components;
-using Hgs.Core.Virtual;
-using Hgs.Test.FakeKSP;
-using Hgs.Test.FakeMod;
+using Hgs.Core.Simulator;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Hgs.Test.Simulation;
@@ -15,7 +9,6 @@ public class ElectricTest {
 
 [TestInitialize]
   public void TestInitialize() {
-    Adapter.Instance = new FakeKSPAdapter();
     SimulationDriver.Initialize();
     SimulationDriver.Instance.Sync(10);
   }

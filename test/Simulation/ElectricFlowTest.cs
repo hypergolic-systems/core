@@ -1,4 +1,5 @@
-using Hgs.Core.Simulation;
+using Hgs.Core.Resources;
+using Hgs.Core.Resources.Resolvers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Hgs.Test.Simulation;

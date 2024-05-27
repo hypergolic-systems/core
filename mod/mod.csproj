@@ -6,52 +6,38 @@
     <LangVersion>preview</LangVersion>
   </PropertyGroup>
   
-  <ItemGroup>
-    <ProjectReference Include="..\core\core.csproj" />
+  <ItemGroup  Condition="'$(Configuration)' == 'Test'">
+    <ProjectReference Include="..\fake\fake.csproj" AdditionalProperties="Configuration=Debug" />
   </ItemGroup>
-  <ItemGroup>
+  <ItemGroup Condition="'$(Configuration)' != 'Test'">
     <Reference Include="Assembly-CSharp">
       <HintPath>../dll/Assembly-CSharp.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
-  </ItemGroup>
-  <ItemGroup>
     <Reference Include="UnityEngine">
       <HintPath>../dll/UnityEngine.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
-  </ItemGroup>
-  <ItemGroup>
     <Reference Include="UnityEngine.AnimationModule">
       <HintPath>../dll/UnityEngine.AnimationModule.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
-  </ItemGroup>
-  <ItemGroup>
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>../dll/UnityEngine.CoreModule.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
-  </ItemGroup>
-  <ItemGroup>
     <Reference Include="UnityEngine.IMGUIModule">
       <HintPath>../dll/UnityEngine.IMGUIModule.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
-  </ItemGroup>
-  <ItemGroup>
     <Reference Include="UnityEngine.InputLegacyModule">
       <HintPath>../dll/UnityEngine.InputLegacyModule.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
-  </ItemGroup>
-  <ItemGroup>
     <Reference Include="UnityEngine.PhysicsModule">
       <HintPath>../dll/UnityEngine.PhysicsModule.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
-  </ItemGroup>
-  <ItemGroup>
     <Reference Include="UnityEngine.TextRenderingModule">
       <HintPath>../dll/UnityEngine.TextRenderingModule.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>

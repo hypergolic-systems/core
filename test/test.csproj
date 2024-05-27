@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\core\core.csproj" />
+    <ProjectReference Include="..\mod\mod.csproj" AdditionalProperties="Configuration=Test">
+    </ProjectReference>
   </ItemGroup>
 </Project>

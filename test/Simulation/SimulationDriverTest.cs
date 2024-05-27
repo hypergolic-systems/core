@@ -1,6 +1,6 @@
 using System;
 using System.Diagnostics;
-using Hgs.Core.Simulation;
+using Hgs.Core.Simulator;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Hgs.Test.Simulation;
