@@ -7,7 +7,7 @@ public class PartModule {
   public Vessel vessel;
 
 
-  public Dictionary<string, Field> Fields;
+  public Dictionary<string, BaseField> Fields;
 
   public virtual void OnAwake() {}
   public virtual void OnStart(StartState state) {}
@@ -19,12 +19,4 @@ public class PartModule {
   public enum StartState {
     Editor,
   } 
-}
-
-public class Field {
-
-  public UI_Control uiControlEditor;
-  public UI_Control uiControlFlight;
-
-  public event Action<object> OnValueModified;
 }

@@ -1,4 +1,5 @@
 bin/
 obj/
 dll/
+/ksp-parts
 hypergolic-systems.sln.DotSettings.user
