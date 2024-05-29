@@ -38,22 +38,12 @@ public class VirtualVessel {
 
   public void OnSynchronized() {
     foreach (var part in virtualParts.Values) {
-      part.module?.OnSynchronized();
+      part.liveModule?.OnSynchronized();
     }
   }
 
   public bool IsLive {
     get => liveVessel != null && liveVessel.rootPart != null;
-  }
-
-  public void CreateVirtualPart(Part part, HgVirtualPartModule module) {
-    Debug.Assert(!virtualParts.ContainsKey(part.persistentId), "Part already exists in the virtual vessel");
-    module.virtualPart = new VirtualPart {
-      id = part.persistentId,
-      spacecraft = spacecraft[0],
-      module = module,
-    };
-    virtualParts[part.persistentId] = module.virtualPart;
   }
 
   public void OnLoad(ConfigNode vesselNode) {
@@ -87,7 +77,7 @@ public class VirtualVessel {
     foreach (var part in virtualParts.Values) {
       var partNode = vesselNode.AddNode("VIRTUAL_PART");
       partNode.AddValue("id", part.id.ToString());
-      foreach (var component in part.components) {
+      foreach (var component in part.Components) {
         component.SaveConfig(partNode.AddNode("COMPONENT"), /* initial */false);
       }
     }

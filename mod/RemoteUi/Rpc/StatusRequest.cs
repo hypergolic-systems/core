@@ -58,8 +58,8 @@ public class StatusRequest : BaseRequest {
       { "name", module.moduleName },
       { "type", module.GetType().Name }
     };
-    if (module is HgVirtualPartModule pb && pb.virtualPart != null) {
-      data.Add("virtualComponents", pb.virtualPart.components.Select(serializeVirtualComponent).ToArray());
+    if (module is IVirtualPartModule pb && pb.VirtualPart != null) {
+      data.Add("virtualComponents", pb.VirtualPart.Components.Select(serializeVirtualComponent).ToArray());
     }
     return data;
   }

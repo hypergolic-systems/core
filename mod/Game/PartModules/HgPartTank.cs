@@ -29,7 +29,7 @@ public class HgPartTank : HgVirtualPartModule {
   #endregion
 
   public IEnumerable<Tank> Tanks {
-    get => virtualPart.components.OfType<Tank>();
+    get => VirtualPart.Components.OfType<Tank>();
   }
 
   private BaseField[] tankUIs;
@@ -41,15 +41,15 @@ public class HgPartTank : HgVirtualPartModule {
     tankFields = (new int[2] {0, 1}).Select(i => typeof(HgPartTank).GetField($"tank{i}_amount")).ToArray();
   }
 
-  protected override void InitializeComponents() {
+  public override void InitializeComponents() {
     float lf = (float) Math.Round(.45f * volume);
     float lox = (float) Math.Round(.55f * volume);
-    virtualPart.AddComponent(new Tank {
+    VirtualPart.AddComponent(new Tank {
       amount = lf,
       volume = lf,
       substance = TankedSubstance.RocketFuel,
     });
-    virtualPart.AddComponent(new Tank {
+    VirtualPart.AddComponent(new Tank {
       amount = lox,
       volume = lox,
       substance = TankedSubstance.LiquidOxygen,

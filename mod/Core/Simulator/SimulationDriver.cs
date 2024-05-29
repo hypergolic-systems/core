@@ -52,7 +52,7 @@ public class SimulationDriver {
     var count = 0;
     foreach (var vessel in HgVirtualVesselModule.AllVirtualVessels) {
       foreach (var part in vessel.virtualParts.Values) {
-        part.module?.OnSynchronized();
+        part.liveModule?.OnSynchronized();
         count++;
       }
     }

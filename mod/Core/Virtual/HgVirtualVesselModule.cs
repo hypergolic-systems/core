@@ -34,7 +34,7 @@ public class HgVirtualVesselModule : VesselModule {
     }
 
     foreach (var part in virtualVessel.virtualParts.Values) {
-      foreach (var component in part.components) {
+      foreach (var component in part.Components) {
         component.OnActivate(virtualVessel);
       }
     }

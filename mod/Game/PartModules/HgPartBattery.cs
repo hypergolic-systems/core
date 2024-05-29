@@ -23,7 +23,7 @@ public class HgPartBattery : HgVirtualPartModule {
 
   public override void OnStart(StartState state) {
     base.OnStart(state);
-    this.battery = this.virtualPart.components.OfType<Battery>().First();
+    this.battery = VirtualPart.Components.OfType<Battery>().First();
     (Fields["StoredEnergy"].uiControlEditor as UI_ProgressBar).maxValue = (float) capacity;
     (Fields["StoredEnergy"].uiControlFlight as UI_ProgressBar).maxValue = (float) capacity;
     if (IsInEditor) {
@@ -34,8 +34,8 @@ public class HgPartBattery : HgVirtualPartModule {
     }
   }
 
-  protected override void InitializeComponents() {
-    virtualPart.AddComponent(new Battery {
+  public override void InitializeComponents() {
+    VirtualPart.AddComponent(new Battery {
       Capacity = capacity,
       Stored = capacity,
     });

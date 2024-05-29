@@ -7,7 +7,7 @@ public class HgPartRtg : HgVirtualPartModule {
   [KSPField]
   public int power = 0;
 
-  protected override void InitializeComponents() {
-    virtualPart.AddComponent(new RadioisotopeThermalGenerator {});
+  public override void InitializeComponents() {
+    VirtualPart.AddComponent(new RadioisotopeThermalGenerator {});
   }
 }
