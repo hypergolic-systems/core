@@ -22,6 +22,10 @@
       <HintPath>../dll/UnityEngine.AnimationModule.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
+    <Reference Include="UnityEngine.AudioModule">
+      <HintPath>../dll/UnityEngine.AudioModule.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>../dll/UnityEngine.CoreModule.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
@@ -36,6 +40,10 @@
     </Reference>
     <Reference Include="UnityEngine.PhysicsModule">
       <HintPath>../dll/UnityEngine.PhysicsModule.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
+    <Reference Include="UnityEngine.ParticleSystemModule">
+      <HintPath>../dll/UnityEngine.ParticleSystemModule.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="UnityEngine.TextRenderingModule">
