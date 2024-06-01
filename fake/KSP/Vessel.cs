@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 
 public class Vessel {
+
+  public FlightCtrlState ctrlState;
+
   public uint persistentId;
   public List<Part> parts;
   public Part rootPart;

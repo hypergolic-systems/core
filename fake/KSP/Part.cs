@@ -17,6 +17,8 @@ public class Part {
     throw new NotImplementedException();
   }
 
+  public void AddForceAtPosition(Vector3 force, Vector3 pos) {}
+
   public FXGroup findFxGroup(string fxName) {
     throw new NotImplementedException();
   }

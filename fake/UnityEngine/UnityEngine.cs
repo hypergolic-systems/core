@@ -13,6 +13,18 @@ public abstract class MonoBehaviour : Component {
 }
 
 public class Vector3 {
+
+  public static Vector3 operator-(Vector3 unary) {
+    throw new NotImplementedException();
+  }
+
+  public static Vector3 operator-(Vector3 a, Vector3 b) {
+    throw new NotImplementedException();
+  }
+
+  public static Vector3 operator*(Vector3 a, float scalar) {
+    throw new NotImplementedException();
+  }
 }
 
 public class Quaternion {
@@ -21,6 +33,7 @@ public class Quaternion {
 
 public class Transform {
   public Vector3 position;
+  public Vector3 forward;
   public Vector3 localPosition;
   public Quaternion localRotation;
 

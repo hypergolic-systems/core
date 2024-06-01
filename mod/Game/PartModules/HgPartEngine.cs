@@ -35,7 +35,7 @@ public class HgPartEngine : HgVirtualPartModule {
       var multiplier = 1f / thrustTransforms.Count;
       foreach (var thrustTransform in thrustTransforms) {
         var thrust = -thrustTransform.forward * finalThrust * multiplier;
-        this.part.AddForceAtPosition(thrust, (Vector3d) thrustTransform.position);
+        this.part.AddForceAtPosition(thrust, thrustTransform.position);
       }
     }
   }
