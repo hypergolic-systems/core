@@ -1,7 +1,7 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Hgs.Core.Engine;
 using Hgs.Core.Virtual;
 using Hgs.Game.Components.Tankage;
 
@@ -42,18 +42,15 @@ public class HgPartTank : HgVirtualPartModule {
   }
 
   public override void InitializeComponents() {
-    float lf = (float) Math.Round(.45f * volume);
-    float lox = (float) Math.Round(.55f * volume);
-    VirtualPart.AddComponent(new Tank {
-      amount = lf,
-      volume = lf,
-      substance = TankedSubstance.RocketFuel,
-    });
-    VirtualPart.AddComponent(new Tank {
-      amount = lox,
-      volume = lox,
-      substance = TankedSubstance.LiquidOxygen,
-    });
+    var totalVolume = PropellantRecipe.LF_LOX.Ingredients.Sum(i => i.VolumePartInRecipe);
+    foreach (var ingredient in PropellantRecipe.LF_LOX.Ingredients) {
+      var amount = volume * ingredient.VolumePartInRecipe / totalVolume;
+      VirtualPart.AddComponent(new Tank {
+        Amount = amount,
+        Volume = amount,
+        Resource = ingredient.Resource,
+      });
+    }
 
     var tanks = Tanks.ToArray();
     for (var i = 0; i < tankUIs.Length; i++) {
@@ -63,12 +60,12 @@ public class HgPartTank : HgVirtualPartModule {
       var field = tankFields[i];
 
       ui.minValue = 0f;
-      ui.maxValue = tank.volume;
-      field.SetValue(this, tank.amount);
-      bf.guiName = tank.substance.GetDisplayName();
+      ui.maxValue = tank.Volume;
+      field.SetValue(this, tank.Amount);
+      bf.guiName = tank.Resource.Name;
       if (IsInEditor) {
         bf.OnValueModified += (value) => {
-          tank.amount = (float) value;
+          tank.Amount = (float) value;
         };
       }
     }
