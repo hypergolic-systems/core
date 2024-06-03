@@ -2,6 +2,8 @@ using Hgs.Core.Simulator;
 using UnityEngine;
 using Hgs.RemoteUi;
 using Hgs.RemoteUi.Rpc;
+using System.Linq;
+using Hgs.Core.Virtual;
 
 namespace Hgs;
 
@@ -25,6 +27,7 @@ public class HgMain : MonoBehaviour {
   public void Awake() {
     GameEvents.onGameStatePostLoad.Add(OnGameLoaded);
     GameEvents.onVesselWasModified.Add(OnVesselWasModified);
+    LoadPartStaticData();
     SimulationDriver.Initialize();
     RemoteUiServer.Initialize();
     RemoteUiServer.RegisterHandler("/status", (ctx) => new StatusRequest(ctx));
@@ -61,6 +64,29 @@ public class HgMain : MonoBehaviour {
   public void OnVesselWasModified(Vessel vessel) {
     // TODO: dedicated method maybe?
     // SpacecraftManager.Instance.OnLoadVessel(vessel);
+  }
+
+  private void LoadPartStaticData() {
+    foreach (var part in PartLoader.LoadedPartsList) {
+      if (part.partPrefab == null) {
+        continue;
+      }
+
+      foreach (var module in part.partPrefab.Modules) {
+        if (!(module is HgVirtualPartModule)) {
+          continue;
+        }
+        Util.Log($"Attempt static data for {module.moduleName} on {part.name}");
+        var vpm = (HgVirtualPartModule) module;
+        var moduleConfig = part.partConfig.GetNodes("MODULE").FirstOrDefault(n => n.GetValue("name") == module.moduleName);
+        if (moduleConfig == null) {
+          Util.Log($"No static config found for {module.moduleName} on {part.name}");
+          continue;
+        }
+
+        vpm.LoadStaticData(moduleConfig);
+      }
+    }
   }
 }
 

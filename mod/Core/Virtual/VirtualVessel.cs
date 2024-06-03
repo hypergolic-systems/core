@@ -23,12 +23,12 @@ public class VirtualVessel {
   public Dictionary<uint, Segment> segmentsByPart = new();
   public Segment rootSegment;
 
-  public Dictionary<uint, ResourceSystem> resources = new();
+  public Dictionary<Resource, ResourceSystem> resources = new();
 
   public Vessel liveVessel = null;
 
   public VirtualVessel() {
-    resources.Add(WellKnownResource.Electricity, new ResourceSystem(new ElectricFlowResolver()));
+    resources.Add(Resource.ElectricCharge, new ResourceSystem(new ElectricFlowResolver()));
   }
 
   public void Clear() {

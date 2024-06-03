@@ -6,6 +6,8 @@ public class Debug {
   public static void Log(string message) {
     Console.WriteLine(message);
   }
+
+  public static void Assert(bool condition, string message) {}
 }
 
 public abstract class MonoBehaviour : Component {
@@ -70,6 +72,10 @@ public class GameObject : Object {
 public class Component : Object {
   public GameObject gameObject;
   public Transform transform;
+
+  public Component GetComponent(Type type) {
+    throw new NotImplementedException();
+  }
 }
 
 public class Light : Component {}

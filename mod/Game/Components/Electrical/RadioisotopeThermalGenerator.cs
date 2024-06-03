@@ -8,7 +8,7 @@ public class RadioisotopeThermalGenerator : VirtualComponent {
   public ResourceFlow flow;
 
   public override void OnActivate(VirtualVessel virtualVessel) {
-    this.flow = virtualVessel.resources[WellKnownResource.Electricity].NewFlow();
+    this.flow = virtualVessel.resources[Resource.ElectricCharge].NewFlow();
     this.flow.Name = $"RTG({part.id})";
     this.flow.CanProduceRate = 10;
     this.flow.Priority = 0;

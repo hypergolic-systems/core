@@ -1,3 +1,4 @@
+using System;
 using Hgs.Core.Virtual;
 
 public interface IVirtualPartModule {

@@ -22,7 +22,7 @@ public class Battery : VirtualComponent {
   }
 
   public override void OnActivate(VirtualVessel virtualVessel) {
-    this.flow = virtualVessel.resources[WellKnownResource.Electricity].NewFlow();
+    this.flow = virtualVessel.resources[Resource.ElectricCharge].NewFlow();
     this.flow.Name = $"Battery({part.id})";
     this.flow.CanProduceRate = Stored > 0 ? 10 : 0;
     this.flow.CanConsumeRate = Stored < Capacity ? 10 : 0;
