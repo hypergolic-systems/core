@@ -2,60 +2,311 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Hgs.Core.Simulator;
+using Hgs.Core.Virtual;
 
 namespace Hgs.Core.Resources;
 
-/// <summary>
-/// Simulates flows of a specific resource within a spacecraft.
-/// </summary>
-public class ResourceSystem(ResourceSystem.IFlowResolver director) : ISimulated {
+public class ResourceSystem : ISimulated {
 
-  public bool IsDirty { get; internal set; } = true;
+  private HashSet<IProducer> producers = new();
+  private HashSet<IBuffer> buffers = new();
+  private HashSet<Ticket> tickets = new();
 
-  private List<ResourceFlow> flows = new List<ResourceFlow>();
+  public bool IsDirty {get; set;} = true;
 
-  public double RemainingValidDeltaT {
-    get => flows.Count == 0 ? double.MaxValue : flows.Select(f => f.RemainingValidDeltaT).Min();
+  public double RemainingValidDeltaT { get; set; } = double.MaxValue;
+
+  public void OnSynchronized() {
+    // Nothing needs to happen here.
   }
 
-  public string DirectorName {
-    get => director.GetType().Name;
+  public void AddProducer(IProducer producer) {
+    producers.Add(producer);
+    IsDirty = true;
+    RemainingValidDeltaT = 0;
+  }
+
+  public void AddBuffer(IBuffer buffer) {
+    buffers.Add(buffer);
+    IsDirty = true;
+    RemainingValidDeltaT = 0;
+  }
+
+  public Ticket NewTicket() {
+    var ticket = new Ticket();
+    this.tickets.Add(ticket);
+    IsDirty = true;
+    return ticket;
   }
 
   public void RecomputeState() {
-    if (!this.IsDirty) {
+    if (!IsDirty) {
       return;
     }
-    this.IsDirty = false;
-    director.ResolveFlows(this.flows);
-  }
 
-  public ResourceFlow NewFlow() {  
-    var flow = new ResourceFlow(this);
-    flows.Add(flow);
-    this.IsDirty = true;
-    return flow;
-  }
+    Console.WriteLine("Recomputing state");
 
-
-  public void Tick(double deltaT) {
-    if (this.IsDirty) {
-      throw new Exception("Cannot Tick() a dirty simulation");
+    // Start off by zeroing all production and consumption, in preparation for a new round of resource allocation.
+    foreach (var producer in producers) {
+      producer.DynamicProductionRate = 0;
     }
-    foreach (var flow in this.flows) {
-      flow.Tick(deltaT);
+    foreach (var buffer in buffers) {
+      buffer.Rate = 0;
     }
-  }
+    foreach (var ticket in tickets) {
+      ticket.Rate = 0;
+    }
 
-  public void OnSynchronized() {
-    foreach (var flow in this.flows) {
-      if (flow.OnSynchronized != null) {
-        flow.OnSynchronized();
+    Console.WriteLine("Done zeroing");
+
+    var remainingTickets = new Queue<Ticket>(tickets.Where(t => t.Request > 0));
+
+    // Start out with the total baseline production, as it's always available.
+    var produced = producers.Select(p => p.BaselineProduction).Sum();
+    while (produced > 0 && remainingTickets.Count > 0) {
+      var ticket = remainingTickets.Peek();
+      if (produced >= ticket.Request) {
+        ticket.Rate = ticket.Request;
+        produced -= ticket.Request;
+        remainingTickets.Dequeue();
+      } else {
+        ticket.Rate += produced;
+        produced = 0;
       }
     }
+
+    Console.WriteLine("done baseline production pass");
+
+    // Split the producers into prioritized groups, ordered by priority.
+    var dynamicProducersList = producers.Where(p => p.DynamicProductionLimit > 0).GroupBy(p => p.Priority).ToList();
+    dynamicProducersList.Sort((a, b) => a.Key.CompareTo(b.Key));
+
+
+    Console.WriteLine("done sort dynamics");
+
+    // We actually want a Queue of producers, so we can iterate through in order. Each group of
+    // producers of the given priority is stored as a `HashSet`, so we can easily remove producers
+    // as they're used up.
+    var dynamicProducers = new Queue<HashSet<IProducer>>(dynamicProducersList.Select(producersInGroup => new HashSet<IProducer>(producersInGroup)));
+    var dynamicProducersIter = dynamicProducers.GetEnumerator();
+
+
+    Console.WriteLine("start enumerate dynamics");
+
+    var group = dynamicProducersIter.MoveNext() ? dynamicProducersIter.Current : null;
+    while (group != null && remainingTickets.Count > 0) {
+      Console.WriteLine("run ticket?");
+      var ticket = remainingTickets.Peek();
+      trySatisfyTicketFromProducers(ticket, group);
+
+      // Check if the ticket is fully satisfied.
+      if (ticket.Rate >= ticket.Request) {
+        remainingTickets.Dequeue();
+      }
+
+      // We want to skip any empty groups, to ensure `group` always points to a producer group with
+      // available production capacity.
+      while (group != null && group.Count == 0) {
+        group = dynamicProducersIter.MoveNext() ? dynamicProducersIter.Current : null;
+      }
+    }
+
+    Console.WriteLine("done with dynamic production, now fill from buffers");
+
+    // Now that we've satisfied as many tickets as we can, we can satisfy further tickets by taking
+    // from buffers.
+
+    while (remainingTickets.Count > 0) {
+      // Here we dequeue tickets instead of peeking, since this is the _last chance_ for them to be
+      // fulfilled.
+      var ticket = remainingTickets.Dequeue();
+      var eligibleBuffers = new HashSet<IBuffer>(buffers.Where(b => b.Amount > 0 && (ticket.BufferFilter == null || ticket.BufferFilter(b))));
+
+      while (ticket.Rate < ticket.Request && eligibleBuffers.Count > 0) {
+        trySatisfyTicketFromBuffers(ticket, eligibleBuffers);
+      }
+    }
+
+    // At this point, we've satisfied all the tickets as best as we can with the current state of
+    // resource production & buffers. Even if we didn't satisfy all tickets, there may still be
+    // production available (due to ticket filters) that can be buffered.
+    //
+    // Note that we add `b.Rate` here since a buffer that's currently being drained can accept
+    // more production, even if it's already at capacity.
+    var buffersWithSpace = new HashSet<IBuffer>(buffers.Where(b => b.Amount + b.Rate < b.Capacity));
+    while (group != null && buffersWithSpace.Count > 0) {
+      tryStoreExcessProduction(group, buffersWithSpace);
+
+      while (group.Count == 0) {
+        group = dynamicProducersIter.MoveNext() ? dynamicProducersIter.Current : null;
+      }
+    }
+
+    // At this point, the resource flows we've derived have reached a steady state. Commit them so
+    // that nodes can react to these changes.
+    foreach (var producer in producers) {
+      producer.Commit();
+    }
+    foreach (var buffer in buffers) {
+      buffer.Commit();
+    }
+    foreach (var ticket in tickets) {
+      ticket.FireOnCommit();
+    }
   }
 
-  public interface IFlowResolver {
-    void ResolveFlows(List<ResourceFlow> flows);
+
+  private void trySatisfyTicketFromProducers(Ticket ticket, HashSet<IProducer> producers) {
+    var remaining = ticket.Request - ticket.Rate;
+
+    // Some `producers` in producers may have a lower max production than the others, so we need to
+    // determine the minimum production rate they all can sustain.
+    var minPerProducer = producers.Select(p => p.DynamicProductionLimit - p.DynamicProductionRate).Min();
+
+    // Because there is demand, we're definitely taking from each producer. We can take up to
+    // `minPerProducer`.
+    var perProducer = Math.Min(minPerProducer, remaining / producers.Count);
+    foreach (var producer in producers) {
+      producer.DynamicProductionRate += perProducer;
+    }
+
+    // Increase the rate given to the ticket by the amount we've taken from the producers.
+    ticket.Rate += perProducer * producers.Count;
+
+    // Remove any producers that have reached their limit.
+    producers.RemoveWhere(p => p.DynamicProductionRate >= p.DynamicProductionLimit);
+
+    // That's all we need to do here. If the ticket is fully satisifed, it'll be removed from the
+    // queue by the caller. If not, we'll be seeing this ticket again, with a new set of producers
+    // that are able to satisfy more of its demand.
+  }
+
+  private void trySatisfyTicketFromBuffers(Ticket ticket, HashSet<IBuffer> buffers) {
+    var remaining = ticket.Request - ticket.Rate;
+
+    // Buffers can only deliver until they run out. Too large of a rate will drain the buffer before
+    // the next simulation step, so we need to determine the minimum rate they can sustain for at 
+    // least the next second, since the simulation runs at a maximum rate of 1 Hz.
+    //
+    // The maximum rate a buffer can sustain for the next second is the amount it contains.
+    var minPerBuffer = buffers.Select(b => b.Amount + b.Rate).Min();
+
+    // Because there is demand, we're definitely taking from each buffer. We can take up to
+    // `minPerBuffer`.
+    var perBuffer = Math.Min(minPerBuffer, remaining / buffers.Count);
+    foreach (var buffer in buffers) {
+      // Note: consumtion is a negative rate for a buffer.
+      buffer.Rate -= perBuffer;
+    }
+
+    // Increase the rate given to the ticket by the amount we've taken from the buffers.
+    ticket.Rate += perBuffer * buffers.Count;
+
+    // Remove any buffers that have reached their rate limit.
+    buffers.RemoveWhere(b => -b.Rate >= b.Amount);
+
+    // That's all we need to do here. If the ticket is not fully satisfied and the buffer list is
+    // not empty, we'll be seeing this ticket again.
+  }
+
+  private void tryStoreExcessProduction(HashSet<IProducer> producers, HashSet<IBuffer> buffers) {
+    // We have two potential limits:
+    // * We shouldn't allocate more than the most constrained producer can produce.
+    // * We shouldn't allocate more than the most constrained buffer can store.
+    var minPerProducer = producers.Select(p => p.DynamicProductionLimit - p.DynamicProductionRate).Min();
+    var minPerBuffer = buffers.Select(b => b.Capacity + b.Rate - b.Amount).Min();
+
+    // We will modify rates according to the lower of the two constraints.
+    var minDelta = Math.Min(minPerProducer, minPerBuffer);
+
+    foreach (var buffer in buffers) {
+      buffer.Rate += minDelta;
+    }
+    foreach (var producer in producers) {
+      producer.DynamicProductionRate += minDelta;
+    }
+
+    buffers.RemoveWhere(b => b.Amount + b.Rate >= b.Capacity);
+    producers.RemoveWhere(p => p.DynamicProductionRate >= p.DynamicProductionLimit);
+  }
+
+  public void Tick(double deltaT) {
+    var deltaTf = (float) deltaT;
+    RemainingValidDeltaT = double.MaxValue;
+
+    foreach (var producer in producers) {
+      producer.Tick(deltaT);
+      RemainingValidDeltaT = Math.Min(RemainingValidDeltaT, producer.RemainingValidDeltaT);
+    }
+
+    foreach (var buffer in buffers) {
+      buffer.Amount += buffer.Rate * deltaTf;
+      if (buffer.Rate > 0) {
+        // Buffer is filling, so we want the time until full.
+        RemainingValidDeltaT = Math.Min(RemainingValidDeltaT, (buffer.Capacity - buffer.Amount) / buffer.Rate);
+      } else if (buffer.Rate < 0) {
+        // Buffer is draining, so we want the time until empty.
+        RemainingValidDeltaT = Math.Min(RemainingValidDeltaT, buffer.Amount / -buffer.Rate);
+      } else {
+        // Buffer is stable, so we can keep it as is.
+      }
+    }
+
+    foreach (var ticket in tickets) {
+      ticket.FireOnTick(deltaT);
+      RemainingValidDeltaT = Math.Min(RemainingValidDeltaT, ticket.RemainingValidDeltaT);
+    }
+  }
+
+  public interface IProducer {
+
+    int Priority { get; }
+    float BaselineProduction { get; }
+    float DynamicProductionLimit { get; }
+    float DynamicProductionRate { get; set; }
+    double RemainingValidDeltaT { get; }
+
+    void Tick(double deltaT);
+    void Commit();
+  }
+
+  public interface IBuffer {
+    float Amount { get; set; }
+    float Capacity { get; }
+    float Rate { get; set; }
+
+    void Commit();
+  }
+
+  public class Ticket {
+    public VirtualComponent Owner;
+
+    // Resource demand in units per second.
+    public float Request = 0;
+    public float Rate = 0;
+
+    public double RemainingValidDeltaT = double.MaxValue;
+
+
+    public event OnCommitFn OnCommit;
+    public event OnTickFn OnTick;
+
+    public BufferFilterFn BufferFilter;
+
+    public delegate void OnCommitFn();
+    public delegate void OnTickFn(double deltaT);
+    public delegate bool BufferFilterFn(IBuffer buffer);
+
+    internal void FireOnCommit() {
+      if (OnCommit != null) {
+        OnCommit();
+      }
+    }
+
+    internal void FireOnTick(double deltaT) {
+      if (OnTick != null) {
+        OnTick(deltaT);
+      }
+    }
   }
 }

@@ -1,8 +1,5 @@
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using Hgs.Core.Resources;
-using Hgs.Core.Resources.Resolvers;
 
 namespace Hgs.Core.Virtual;
 
@@ -28,7 +25,7 @@ public class VirtualVessel {
   public Vessel liveVessel = null;
 
   public VirtualVessel() {
-    resources.Add(Resource.ElectricCharge, new ResourceSystem(new ElectricFlowResolver()));
+    resources.Add(Resource.ElectricCharge, new ResourceSystem());
   }
 
   public void Clear() {

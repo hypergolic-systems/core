@@ -71,13 +71,10 @@ public class StatusRequest : BaseRequest {
     };
     if (cmp is Battery battery) {
       data.Add("capacity", battery.Capacity);
-      data.Add("stored", battery.Stored);
-      data.Add("flow", battery.flow.ActiveRate);
-      data.Add("canConsume", battery.flow.CanConsumeRate);
-      data.Add("canProduce", battery.flow.CanProduceRate);
+      data.Add("stored", battery.Amount);
+      data.Add("flow", battery.Rate);
     } else if (cmp is RadioisotopeThermalGenerator rtg) {
-      data.Add("flow", rtg.flow.ActiveRate);
-      data.Add("canProduce", rtg.flow.CanProduceRate);
+      data.Add("production", rtg.BaselineProduction);
     }
     return data;
   }

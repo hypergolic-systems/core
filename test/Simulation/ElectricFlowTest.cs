@@ -1,5 +1,4 @@
 using Hgs.Core.Resources;
-using Hgs.Core.Resources.Resolvers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Hgs.Test.Simulation;
@@ -11,46 +10,65 @@ public class ElectricFlowTest {
 
   [TestInitialize]
   public void TestInitialize() {
-    sim = new ResourceSystem(new ElectricFlowResolver());
+  sim = new ResourceSystem();
   }
 
   [TestMethod]
   public void Test_OneInOneOut() {
-    var prod = sim.NewFlow();
-    prod.CanProduceRate = 10;
-    var cons = sim.NewFlow();
-    cons.CanConsumeRate = 5;
+    var prod = new TestProducer {
+      DynamicProductionLimit = 10,
+    };
+    sim.AddProducer(prod);
+
+    var cons = sim.NewTicket();
+    cons.Request = 5;
 
     sim.RecomputeState();
 
-    Util.AssertWithinEpsilon(-5, prod.ActiveRate);
-    Util.AssertWithinEpsilon(5, cons.ActiveRate);
+    Util.AssertWithinEpsilon(5, prod.DynamicProductionRate);
+    Util.AssertWithinEpsilon(5, cons.Rate);
   }
 
   [TestMethod]
   public void Test_OneSmallConsumer() {
-    var prod1 = sim.NewFlow();
-    var prod2 = sim.NewFlow();
-    prod1.CanProduceRate = prod2.CanProduceRate = 10;
-    
-    var cons1 = sim.NewFlow();
-    var cons2 = sim.NewFlow();
-    var cons3 = sim.NewFlow();
-    cons1.CanConsumeRate = cons3.CanConsumeRate = 10;
-    cons2.CanConsumeRate = 6;
+    var prod1 = new TestProducer {
+      DynamicProductionLimit = 10,
+    };
+    var prod2 = new TestProducer {
+      DynamicProductionLimit = 10,
+    };
+    sim.AddProducer(prod1);
+    sim.AddProducer(prod2);
+
+    var cons1 = sim.NewTicket();
+    cons1.Request = 10;
+    var cons2 = sim.NewTicket();
+    cons2.Request = 6;
+    var cons3 = sim.NewTicket();
+    cons3.Request = 10;
+
 
     sim.RecomputeState();
 
-    // Producers should be tapped out.
-    Util.AssertWithinEpsilon(-10, prod1.ActiveRate);
-    Util.AssertWithinEpsilon(-10, prod2.ActiveRate);
+    // Producers should be maxed out.
+    Util.AssertWithinEpsilon(10, prod1.DynamicProductionRate);
+    Util.AssertWithinEpsilon(10, prod2.DynamicProductionRate);
 
-    // Consumer 2 should be maxed out.
-    Util.AssertWithinEpsilon(6, cons2.ActiveRate);
-    // Consumers 1 and 3 should have split the remaining 14:
-    Util.AssertWithinEpsilon(7, cons1.ActiveRate);
-    Util.AssertWithinEpsilon(7, cons3.ActiveRate);
+    // Consumers 1 and 2 should be respectively maxed out.
+    Util.AssertWithinEpsilon(10, cons1.Rate);
+    Util.AssertWithinEpsilon(6, cons2.Rate);
 
-    
+    // Consumer 3 should have gotten the remaining allocation.
+    Util.AssertWithinEpsilon(4, cons3.Rate);
+  }
+
+  public class TestProducer : ResourceSystem.IProducer {
+    public float BaselineProduction { get; set; } = 0;
+    public float DynamicProductionRate { get; set; } = 0;
+    public float DynamicProductionLimit { get; set; } =  0;
+    public double RemainingValidDeltaT { get; set; } = double.MaxValue;
+    public int Priority { get; set; } = 0;
+    public void Commit() {}
+    public void Tick(double deltaT) {}
   }
 }

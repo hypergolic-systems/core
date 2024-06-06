@@ -3,17 +3,24 @@ using Hgs.Core.Resources;
 
 namespace Hgs.Game.Components.Electrical;
 
-public class RadioisotopeThermalGenerator : VirtualComponent {
+public class RadioisotopeThermalGenerator : VirtualComponent, ResourceSystem.IProducer {
+  public int Priority => 0;
 
-  public ResourceFlow flow;
+  public float BaselineProduction => 10;
+
+  public float DynamicProductionLimit => 0;
+
+  public float DynamicProductionRate { get; set; } = 0;
+
+  public double RemainingValidDeltaT => double.MaxValue;
+
+  public void Commit() {}
 
   public override void OnActivate(VirtualVessel virtualVessel) {
-    this.flow = virtualVessel.resources[Resource.ElectricCharge].NewFlow();
-    this.flow.Name = $"RTG({part.id})";
-    this.flow.CanProduceRate = 10;
-    this.flow.Priority = 0;
-    this.flow.StorageTier = 10;
+    virtualVessel.resources[Resource.ElectricCharge].AddProducer(this);
   }
+
+  public void Tick(double deltaT) {}
 
   protected override void Load(ConfigNode node) {}
   protected override void Save(ConfigNode node) {}

@@ -27,9 +27,9 @@ public class HgPartBattery : HgVirtualPartModule {
     (Fields["StoredEnergy"].uiControlEditor as UI_ProgressBar).maxValue = (float) capacity;
     (Fields["StoredEnergy"].uiControlFlight as UI_ProgressBar).maxValue = (float) capacity;
     if (IsInEditor) {
-      StoredEnergy = (float) battery.Stored;
+      StoredEnergy = (float) battery.Amount;
       Fields["StoredEnergy"].OnValueModified += (_) => {
-        battery.Stored = (double) StoredEnergy;
+        battery.Amount = StoredEnergy;
       };
     }
   }
@@ -37,13 +37,13 @@ public class HgPartBattery : HgVirtualPartModule {
   public override void InitializeComponents() {
     VirtualPart.AddComponent(new Battery {
       Capacity = capacity,
-      Stored = capacity,
+      Amount = capacity,
     });
   }
 
   public override void OnSynchronized() {
     base.OnSynchronized();
 
-    StoredEnergy = (float) battery.Stored;
+    StoredEnergy = (float) battery.Amount;
   }
 }

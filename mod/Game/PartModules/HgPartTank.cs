@@ -47,7 +47,7 @@ public class HgPartTank : HgVirtualPartModule {
       var amount = volume * ingredient.VolumePartInRecipe / totalVolume;
       VirtualPart.AddComponent(new Tank {
         Amount = amount,
-        Volume = amount,
+        Capacity = amount,
         Resource = ingredient.Resource,
       });
     }
@@ -60,7 +60,7 @@ public class HgPartTank : HgVirtualPartModule {
       var field = tankFields[i];
 
       ui.minValue = 0f;
-      ui.maxValue = tank.Volume;
+      ui.maxValue = tank.Capacity;
       field.SetValue(this, tank.Amount);
       bf.guiName = tank.Resource.Name;
       if (IsInEditor) {
@@ -68,6 +68,14 @@ public class HgPartTank : HgVirtualPartModule {
           tank.Amount = (float) value;
         };
       }
+    }
+  }
+
+  public override void OnSynchronized() {
+    base.OnSynchronized();
+    var tanks = Tanks.ToArray();
+    for (var i = 0; i < tanks.Length; i++) {
+      tankUIs[i].SetValue(this, tanks[i].Amount);
     }
   }
 }
