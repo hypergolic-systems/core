@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net45</TargetFramework>
+    <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>disable</Nullable>
     <IsPackable>false</IsPackable>
     <LangVersion>preview</LangVersion>
@@ -20,6 +21,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\mod\mod.csproj" AdditionalProperties="Configuration=Test">
+    </ProjectReference>
+    <ProjectReference Include="..\fake\fake.csproj">
     </ProjectReference>
   </ItemGroup>
 </Project>

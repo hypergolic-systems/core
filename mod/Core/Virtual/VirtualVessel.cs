@@ -25,7 +25,9 @@ public class VirtualVessel {
   public Vessel liveVessel = null;
 
   public VirtualVessel() {
-    resources.Add(Resource.ElectricCharge, new ResourceSystem());
+    foreach (var resource in Resource.Resources.Values) {
+      resources.Add(resource, new ResourceSystem());
+    }
   }
 
   public void Clear() {

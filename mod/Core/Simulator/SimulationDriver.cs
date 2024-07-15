@@ -65,7 +65,7 @@ public class SimulationDriver {
   private void runTimeForward(double deltaT) {
     // It may take multiple simulation steps to progress by `deltaT`.
     while (deltaT > 0) {
-      // Firstly, ensure that our simulation is up to date.
+      // Begin by ensuring that our simulation is up to date.
       stabilizeSimulationIfNeeded();
 
       // Find the largest time step that can be taken. This could be
@@ -90,6 +90,8 @@ public class SimulationDriver {
         deltaT = 0;
       }
     }
+
+    stabilizeSimulationIfNeeded();
   }
 
   /// <summary>
@@ -101,7 +103,7 @@ public class SimulationDriver {
     // system's stabilization may destabilize another.
     while (true) {
       // Check if any unstable targets exist.
-      var dirtyTargets = targets.Where(t => t.IsDirty).ToList();
+      var dirtyTargets = targets.Where(t => t.RemainingValidDeltaT < 1.0).ToList();
       if (dirtyTargets.Count == 0) {
         // All targets are stable.
         return;
@@ -125,6 +127,10 @@ public class SimulationDriver {
       // Wait for all recomputation to finish. Note that some of the individual
       // simulations may have marked others dirty again.
       outstandingRecomputations.Wait();
+
+      foreach (var target in dirtyTargets) {
+        target.OnStabilized();
+      }
     }
   }
 }

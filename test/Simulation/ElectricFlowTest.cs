@@ -1,4 +1,5 @@
 using Hgs.Core.Resources;
+using Hgs.Test.Util;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Hgs.Test.Simulation;
@@ -25,8 +26,8 @@ public class ElectricFlowTest {
 
     sim.RecomputeState();
 
-    Util.AssertWithinEpsilon(5, prod.DynamicProductionRate);
-    Util.AssertWithinEpsilon(5, cons.Rate);
+    AssertUtil.WithinEpsilon(5, prod.DynamicProductionRate);
+    AssertUtil.WithinEpsilon(5, cons.Rate);
   }
 
   [TestMethod]
@@ -51,15 +52,15 @@ public class ElectricFlowTest {
     sim.RecomputeState();
 
     // Producers should be maxed out.
-    Util.AssertWithinEpsilon(10, prod1.DynamicProductionRate);
-    Util.AssertWithinEpsilon(10, prod2.DynamicProductionRate);
+    AssertUtil.WithinEpsilon(10, prod1.DynamicProductionRate);
+    AssertUtil.WithinEpsilon(10, prod2.DynamicProductionRate);
 
     // Consumers 1 and 2 should be respectively maxed out.
-    Util.AssertWithinEpsilon(10, cons1.Rate);
-    Util.AssertWithinEpsilon(6, cons2.Rate);
+    AssertUtil.WithinEpsilon(10, cons1.Rate);
+    AssertUtil.WithinEpsilon(6, cons2.Rate);
 
     // Consumer 3 should have gotten the remaining allocation.
-    Util.AssertWithinEpsilon(4, cons3.Rate);
+    AssertUtil.WithinEpsilon(4, cons3.Rate);
   }
 
   public class TestProducer : ResourceSystem.IProducer {

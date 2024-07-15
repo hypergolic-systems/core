@@ -64,7 +64,8 @@ public class SimulationDriverTest {
       Value += Rate * deltaT;
     }
 
-    public void OnSynchronized() {
-    }
+    public void OnStabilized() {}
+
+    public void OnSynchronized() {}
   }
 }

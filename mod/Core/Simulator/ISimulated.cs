@@ -1,8 +1,6 @@
 namespace Hgs.Core.Simulator;
 
 public interface ISimulated {
-  bool IsDirty { get; }
-
   void RecomputeState();
 
   /// <summary>
@@ -13,4 +11,6 @@ public interface ISimulated {
 
   void Tick(double deltaT);
   void OnSynchronized();
+
+  void OnStabilized();
 }

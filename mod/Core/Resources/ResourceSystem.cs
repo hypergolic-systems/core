@@ -12,9 +12,12 @@ public class ResourceSystem : ISimulated {
   private HashSet<IBuffer> buffers = new();
   private HashSet<Ticket> tickets = new();
 
-  public bool IsDirty {get; set;} = true;
-
-  public double RemainingValidDeltaT { get; set; } = double.MaxValue;
+  // TODO: perhaps we should cache this?
+  public double RemainingValidDeltaT {
+    get => Math.Min(tickets.Select(t => t.RemainingValidDeltaT).DefaultIfEmpty(double.MaxValue).Min(),
+                    Math.Min(producers.Select(p => p.RemainingValidDeltaT).DefaultIfEmpty(double.MaxValue).Min(),
+                             buffers.Select(remainingDeltaTOfBuffer).DefaultIfEmpty(double.MaxValue).Min()));
+  }
 
   public void OnSynchronized() {
     // Nothing needs to happen here.
@@ -22,30 +25,32 @@ public class ResourceSystem : ISimulated {
 
   public void AddProducer(IProducer producer) {
     producers.Add(producer);
-    IsDirty = true;
-    RemainingValidDeltaT = 0;
   }
 
   public void AddBuffer(IBuffer buffer) {
     buffers.Add(buffer);
-    IsDirty = true;
-    RemainingValidDeltaT = 0;
+  }
+
+  private double remainingDeltaTOfBuffer(IBuffer buffer) {
+    if (buffer.Rate > 0) {
+      // Buffer is filling, so we want the time until full.
+      return (buffer.Capacity - buffer.Amount) / buffer.Rate;
+    } else if (buffer.Rate < 0) {
+      // Buffer is draining, so we want the time until empty.
+      return buffer.Amount / -buffer.Rate;
+    } else {
+      // Buffer is stable, so we can keep it as is.
+      return double.MaxValue;
+    }
   }
 
   public Ticket NewTicket() {
     var ticket = new Ticket();
-    this.tickets.Add(ticket);
-    IsDirty = true;
+    tickets.Add(ticket);
     return ticket;
   }
 
   public void RecomputeState() {
-    if (!IsDirty) {
-      return;
-    }
-
-    Console.WriteLine("Recomputing state");
-
     // Start off by zeroing all production and consumption, in preparation for a new round of resource allocation.
     foreach (var producer in producers) {
       producer.DynamicProductionRate = 0;
@@ -56,8 +61,6 @@ public class ResourceSystem : ISimulated {
     foreach (var ticket in tickets) {
       ticket.Rate = 0;
     }
-
-    Console.WriteLine("Done zeroing");
 
     var remainingTickets = new Queue<Ticket>(tickets.Where(t => t.Request > 0));
 
@@ -75,14 +78,9 @@ public class ResourceSystem : ISimulated {
       }
     }
 
-    Console.WriteLine("done baseline production pass");
-
     // Split the producers into prioritized groups, ordered by priority.
     var dynamicProducersList = producers.Where(p => p.DynamicProductionLimit > 0).GroupBy(p => p.Priority).ToList();
     dynamicProducersList.Sort((a, b) => a.Key.CompareTo(b.Key));
-
-
-    Console.WriteLine("done sort dynamics");
 
     // We actually want a Queue of producers, so we can iterate through in order. Each group of
     // producers of the given priority is stored as a `HashSet`, so we can easily remove producers
@@ -90,12 +88,8 @@ public class ResourceSystem : ISimulated {
     var dynamicProducers = new Queue<HashSet<IProducer>>(dynamicProducersList.Select(producersInGroup => new HashSet<IProducer>(producersInGroup)));
     var dynamicProducersIter = dynamicProducers.GetEnumerator();
 
-
-    Console.WriteLine("start enumerate dynamics");
-
     var group = dynamicProducersIter.MoveNext() ? dynamicProducersIter.Current : null;
     while (group != null && remainingTickets.Count > 0) {
-      Console.WriteLine("run ticket?");
       var ticket = remainingTickets.Peek();
       trySatisfyTicketFromProducers(ticket, group);
 
@@ -111,7 +105,6 @@ public class ResourceSystem : ISimulated {
       }
     }
 
-    Console.WriteLine("done with dynamic production, now fill from buffers");
 
     // Now that we've satisfied as many tickets as we can, we can satisfy further tickets by taking
     // from buffers.
@@ -149,9 +142,6 @@ public class ResourceSystem : ISimulated {
     }
     foreach (var buffer in buffers) {
       buffer.Commit();
-    }
-    foreach (var ticket in tickets) {
-      ticket.FireOnCommit();
     }
   }
 
@@ -232,29 +222,23 @@ public class ResourceSystem : ISimulated {
 
   public void Tick(double deltaT) {
     var deltaTf = (float) deltaT;
-    RemainingValidDeltaT = double.MaxValue;
 
     foreach (var producer in producers) {
       producer.Tick(deltaT);
-      RemainingValidDeltaT = Math.Min(RemainingValidDeltaT, producer.RemainingValidDeltaT);
     }
 
     foreach (var buffer in buffers) {
       buffer.Amount += buffer.Rate * deltaTf;
-      if (buffer.Rate > 0) {
-        // Buffer is filling, so we want the time until full.
-        RemainingValidDeltaT = Math.Min(RemainingValidDeltaT, (buffer.Capacity - buffer.Amount) / buffer.Rate);
-      } else if (buffer.Rate < 0) {
-        // Buffer is draining, so we want the time until empty.
-        RemainingValidDeltaT = Math.Min(RemainingValidDeltaT, buffer.Amount / -buffer.Rate);
-      } else {
-        // Buffer is stable, so we can keep it as is.
-      }
     }
 
     foreach (var ticket in tickets) {
       ticket.FireOnTick(deltaT);
-      RemainingValidDeltaT = Math.Min(RemainingValidDeltaT, ticket.RemainingValidDeltaT);
+    }
+  }
+
+  public void OnStabilized() {
+    foreach (var ticket in tickets) {
+      ticket.FireOnCommit();
     }
   }
 
@@ -282,7 +266,18 @@ public class ResourceSystem : ISimulated {
     public VirtualComponent Owner;
 
     // Resource demand in units per second.
-    public float Request = 0;
+
+    private float request = 0;
+    public float Request {
+      get => request;
+      set {
+        if (request != value) {
+          RemainingValidDeltaT = 0;
+        }
+        request = value;
+      }
+    }
+
     public float Rate = 0;
 
     public double RemainingValidDeltaT = double.MaxValue;
