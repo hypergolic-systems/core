@@ -1,7 +1,6 @@
 using System.Linq;
 using Hgs.Core.Virtual;
 using Hgs.Game.Components.Electrical;
-using UnityEngine;
 
 namespace Hgs.Game.PartModules;
 

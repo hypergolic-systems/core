@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using Hgs.Core.Engine;
 using Hgs.Core.Virtual;
@@ -49,7 +48,7 @@ public class BufferedRealtimeConsumer {
       };
       group.resources[ingredient.Resource] = buffered;
       ticket.OnCommit += () => group.OnResourceCommit(buffered);
-      ticket.OnTick += (deltaTime) => group.OnResourceTick(buffered, (float) deltaTime);
+      ticket.OnTick += (deltaTime) => group.OnResourceTick(buffered, deltaTime);
     }
     return group;
   }
@@ -80,15 +79,22 @@ public class BufferedRealtimeConsumer {
       // The rate of consumption has changed, and we need to re-evaluate the buffer.
       currentLiveRateFraction = liveRateFraction;
       transitionToUnstable();
+    } else {
+      currentLiveRateFraction = liveRateFraction;
     }
 
-    currentLiveRateFraction = liveRateFraction;
-    return liveRateFraction == 0;
+    if (deltaTime > 0 && currentLiveRateFraction > 0) {
+      float timeFactor = currentLiveRateFraction * deltaTime;
+      foreach (var buffer in resources.Values) {
+        buffer.Amount -= buffer.MaxRate * timeFactor;
+      }
+    }
+
+    return true;
   }
 
   private void transitionToStarved() {
     // We've run out of at least one resource, and cannot satisfy requests.
-    Console.WriteLine("Transition to starvation condition");
     state = State.Starved;
     foreach (var buffer in resources.Values) {
       if (buffer.Amount < buffer.MaxRate) {
@@ -103,7 +109,6 @@ public class BufferedRealtimeConsumer {
   }
 
   private void transitionToUnstable() {
-    Console.WriteLine("Transition to unstable condition");
     state = State.Unstable;
     foreach (var buffer in resources.Values) {
       if (buffer.Amount >= buffer.MaxRate) {
@@ -116,7 +121,7 @@ public class BufferedRealtimeConsumer {
     } 
   }
 
-  private void OnResourceTick(BufferedResource resource, float deltaTime) {
+  private void OnResourceTick(BufferedResource resource, ulong deltaTime) {
     // Buffer the resource according to its rate.
     resource.Amount += resource.Ticket.Rate * deltaTime;
 
@@ -140,12 +145,12 @@ public class BufferedRealtimeConsumer {
     var gainRate = resource.Ticket.Rate - consumeRate;
     if (gainRate == 0) {
       // The buffer is not changing, so this condition is stable.
-      ticket.RemainingValidDeltaT = double.MaxValue;
+      ticket.RemainingValidDeltaT = ulong.MaxValue;
     } else if (gainRate > 0) {
       // The buffer is slowly filling.
-      ticket.RemainingValidDeltaT = (resource.MaxRate - resource.Amount) / gainRate;
+      ticket.RemainingValidDeltaT = (ulong) Math.Ceiling((resource.MaxRate - resource.Amount) / gainRate);
     } else {
-      ticket.RemainingValidDeltaT = resource.Amount / -gainRate;
+      ticket.RemainingValidDeltaT = (ulong) Math.Floor(resource.Amount / -gainRate);
     }
 
     var isStable = resources.Values.All(resource => resource.Amount >= resource.MaxRate && resource.Ticket.Rate == resource.Ticket.Request);
@@ -153,6 +158,10 @@ public class BufferedRealtimeConsumer {
       state = State.Stable;
     }
   }
+
+  public float GetAmountInBuffer(Resource resource) {
+    return resources[resource].Amount;
+  } 
 
   private class BufferedResource {
     public Resource Resource;

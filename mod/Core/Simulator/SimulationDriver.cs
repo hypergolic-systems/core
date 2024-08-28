@@ -13,7 +13,7 @@ public class SimulationDriver {
   private const double EPSILON_TIME = 1e-6;
   private HashSet<ISimulated> targets = new HashSet<ISimulated>();
 
-  private double lastSynchronizedTime = 0;
+  private ulong LastSync = 0;
 
   public static SimulationDriver Instance;
 
@@ -29,21 +29,26 @@ public class SimulationDriver {
     targets.Remove(target);
   }
 
-  public void Sync(double time) {
-    if (lastSynchronizedTime == 0) {
+  public void Sync(double timeDouble) {
+    var time = (ulong) timeDouble;
+    if (LastSync == 0) {
       // This is our first synchronization, so capture the current
       // time only. No recomputation is needed.
-      lastSynchronizedTime = time;
+      LastSync = time;
       return;
     }
 
     // Calculate `deltaT`.
-    var deltaT = time - lastSynchronizedTime;
-    Debug.Assert(deltaT >= 0);
+    var deltaT = time - LastSync;
+    if (deltaT == 0) {
+      return;
+    }
+
+    Debug.Assert(deltaT > 0);
 
     // Advance time forward.
     this.runTimeForward(deltaT);
-    this.lastSynchronizedTime = time;
+    this.LastSync = time;
 
     foreach (var target in targets) {
       target.OnSynchronized();
@@ -62,7 +67,7 @@ public class SimulationDriver {
   /// <summary>
   /// Simulate time forward by `deltaT` seconds.
   /// </summary>
-  private void runTimeForward(double deltaT) {
+  private void runTimeForward(ulong deltaT) {
     // It may take multiple simulation steps to progress by `deltaT`.
     while (deltaT > 0) {
       // Begin by ensuring that our simulation is up to date.
@@ -86,9 +91,6 @@ public class SimulationDriver {
       }
 
       deltaT -= deltaTStep;
-      if (Math.Abs(deltaT) < EPSILON_TIME) {
-        deltaT = 0;
-      }
     }
 
     stabilizeSimulationIfNeeded();
@@ -103,7 +105,7 @@ public class SimulationDriver {
     // system's stabilization may destabilize another.
     while (true) {
       // Check if any unstable targets exist.
-      var dirtyTargets = targets.Where(t => t.RemainingValidDeltaT < 1.0).ToList();
+      var dirtyTargets = targets.Where(t => t.RemainingValidDeltaT == 0).ToList();
       if (dirtyTargets.Count == 0) {
         // All targets are stable.
         return;

@@ -13,10 +13,10 @@ public class ResourceSystem : ISimulated {
   private HashSet<Ticket> tickets = new();
 
   // TODO: perhaps we should cache this?
-  public double RemainingValidDeltaT {
-    get => Math.Min(tickets.Select(t => t.RemainingValidDeltaT).DefaultIfEmpty(double.MaxValue).Min(),
-                    Math.Min(producers.Select(p => p.RemainingValidDeltaT).DefaultIfEmpty(double.MaxValue).Min(),
-                             buffers.Select(remainingDeltaTOfBuffer).DefaultIfEmpty(double.MaxValue).Min()));
+  public ulong RemainingValidDeltaT {
+    get => Math.Min(tickets.Select(t => t.RemainingValidDeltaT).DefaultIfEmpty(ulong.MaxValue).Min(),
+                    Math.Min(producers.Select(p => p.RemainingValidDeltaT).DefaultIfEmpty(ulong.MaxValue).Min(),
+                             buffers.Select(remainingDeltaTOfBuffer).DefaultIfEmpty(ulong.MaxValue).Min()));
   }
 
   public void OnSynchronized() {
@@ -31,16 +31,16 @@ public class ResourceSystem : ISimulated {
     buffers.Add(buffer);
   }
 
-  private double remainingDeltaTOfBuffer(IBuffer buffer) {
+  private ulong remainingDeltaTOfBuffer(IBuffer buffer) {
     if (buffer.Rate > 0) {
       // Buffer is filling, so we want the time until full.
-      return (buffer.Capacity - buffer.Amount) / buffer.Rate;
+      return (ulong) Math.Ceiling((buffer.Capacity - buffer.Amount) / buffer.Rate);
     } else if (buffer.Rate < 0) {
       // Buffer is draining, so we want the time until empty.
-      return buffer.Amount / -buffer.Rate;
+      return (ulong) Math.Ceiling(buffer.Amount / -buffer.Rate);
     } else {
       // Buffer is stable, so we can keep it as is.
-      return double.MaxValue;
+      return ulong.MaxValue;
     }
   }
 
@@ -220,15 +220,14 @@ public class ResourceSystem : ISimulated {
     producers.RemoveWhere(p => p.DynamicProductionRate >= p.DynamicProductionLimit);
   }
 
-  public void Tick(double deltaT) {
-    var deltaTf = (float) deltaT;
+  public void Tick(ulong deltaT) {
 
     foreach (var producer in producers) {
       producer.Tick(deltaT);
     }
 
     foreach (var buffer in buffers) {
-      buffer.Amount += buffer.Rate * deltaTf;
+      buffer.Amount += buffer.Rate * deltaT;
     }
 
     foreach (var ticket in tickets) {
@@ -248,9 +247,9 @@ public class ResourceSystem : ISimulated {
     float BaselineProduction { get; }
     float DynamicProductionLimit { get; }
     float DynamicProductionRate { get; set; }
-    double RemainingValidDeltaT { get; }
+    ulong RemainingValidDeltaT { get; }
 
-    void Tick(double deltaT);
+    void Tick(ulong deltaT);
     void Commit();
   }
 
@@ -280,7 +279,7 @@ public class ResourceSystem : ISimulated {
 
     public float Rate = 0;
 
-    public double RemainingValidDeltaT = double.MaxValue;
+    public ulong RemainingValidDeltaT = ulong .MaxValue;
 
 
     public event OnCommitFn OnCommit;
@@ -289,7 +288,7 @@ public class ResourceSystem : ISimulated {
     public BufferFilterFn BufferFilter;
 
     public delegate void OnCommitFn();
-    public delegate void OnTickFn(double deltaT);
+    public delegate void OnTickFn(ulong deltaT);
     public delegate bool BufferFilterFn(IBuffer buffer);
 
     internal void FireOnCommit() {
@@ -298,7 +297,7 @@ public class ResourceSystem : ISimulated {
       }
     }
 
-    internal void FireOnTick(double deltaT) {
+    internal void FireOnTick(ulong deltaT) {
       if (OnTick != null) {
         OnTick(deltaT);
       }

@@ -67,9 +67,9 @@ public class ElectricFlowTest {
     public float BaselineProduction { get; set; } = 0;
     public float DynamicProductionRate { get; set; } = 0;
     public float DynamicProductionLimit { get; set; } =  0;
-    public double RemainingValidDeltaT { get; set; } = double.MaxValue;
+    public ulong RemainingValidDeltaT { get; set; } = ulong.MaxValue;
     public int Priority { get; set; } = 0;
     public void Commit() {}
-    public void Tick(double deltaT) {}
+    public void Tick(ulong deltaT) {}
   }
 }

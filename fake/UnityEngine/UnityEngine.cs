@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 
 namespace UnityEngine;
 
@@ -72,6 +73,16 @@ public class GameObject : Object {
 public class Component : Object {
   public GameObject gameObject;
   public Transform transform;
+
+  public MethodInfo METHOD_FIXEDUPDATE;
+  
+  public Component() {
+    METHOD_FIXEDUPDATE = GetType().GetMethod("FixedUpdate", BindingFlags.NonPublic | BindingFlags.Instance);
+  }
+
+  public void Test_InvokeFixedUpdate() {
+    METHOD_FIXEDUPDATE?.Invoke(this, []);
+  }
 
   public Component GetComponent(Type type) {
     throw new NotImplementedException();

@@ -7,9 +7,9 @@ public interface ISimulated {
   /// The maximum Δt that the current state is valid for, assuming no outside events cause an
   /// invalidation.
   /// </summary>
-  double RemainingValidDeltaT { get; }
+  ulong RemainingValidDeltaT { get; }
 
-  void Tick(double deltaT);
+  void Tick(ulong deltaT);
   void OnSynchronized();
 
   void OnStabilized();

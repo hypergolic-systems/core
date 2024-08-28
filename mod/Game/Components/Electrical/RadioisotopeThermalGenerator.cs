@@ -12,7 +12,7 @@ public class RadioisotopeThermalGenerator : VirtualComponent, ResourceSystem.IPr
 
   public float DynamicProductionRate { get; set; } = 0;
 
-  public double RemainingValidDeltaT => double.MaxValue;
+  public ulong RemainingValidDeltaT => ulong.MaxValue;
 
   public void Commit() {}
 
@@ -20,7 +20,7 @@ public class RadioisotopeThermalGenerator : VirtualComponent, ResourceSystem.IPr
     virtualVessel.resources[Resource.ElectricCharge].AddProducer(this);
   }
 
-  public void Tick(double deltaT) {}
+  public void Tick(ulong deltaT) {}
 
   protected override void Load(ConfigNode node) {}
   protected override void Save(ConfigNode node) {}
