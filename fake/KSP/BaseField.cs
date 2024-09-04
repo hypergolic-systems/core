@@ -5,6 +5,8 @@ public class BaseField {
   public UI_Control uiControlEditor;
   public UI_Control uiControlFlight;
 
+  public KSPField Attribute { get; }
+
   public object GetValue(object host) {
     return null;
   }

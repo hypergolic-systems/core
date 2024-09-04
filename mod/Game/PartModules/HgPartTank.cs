@@ -19,12 +19,13 @@ public class HgPartTank : HgVirtualPartModule {
   [UI_ProgressBar(affectSymCounterparts = UI_Scene.Editor, controlEnabled = false, minValue = 0f, maxValue = 1f)]
   public float freeSpace = 0f;
 
+
   [KSPField(isPersistant = false, guiActive = true, guiActiveEditor = true, guiName = "Amount", guiUnits = "L", groupName = "resources", groupDisplayName = "Resources")]
-  [UI_FloatRange(affectSymCounterparts = UI_Scene.Editor, controlEnabled = true, minValue = 0f, maxValue = 1f, stepIncrement = 1f)]
+  [UI_ProgressBar(affectSymCounterparts = UI_Scene.Editor, controlEnabled = false, minValue = 0f, maxValue = 1f)]
   public float tank0_amount = 0f;
 
   [KSPField(isPersistant = false, guiActive = true, guiActiveEditor = true, guiName = "Amount", guiUnits = "L", groupName = "resources", groupDisplayName = "Resources")]
-  [UI_FloatRange(affectSymCounterparts = UI_Scene.Editor, controlEnabled = true, minValue = 0f, maxValue = 1f, stepIncrement = 1f)]
+  [UI_ProgressBar(affectSymCounterparts = UI_Scene.Editor, controlEnabled = false, minValue = 0f, maxValue = 1f)]
   public float tank1_amount = 0f;
   #endregion
 
@@ -56,17 +57,24 @@ public class HgPartTank : HgVirtualPartModule {
     for (var i = 0; i < tankUIs.Length; i++) {
       var tank = tanks[i];
       var bf = tankUIs[i];
-      var ui = bf.uiControlEditor as UI_FloatRange;
       var field = tankFields[i];
 
-      ui.minValue = 0f;
-      ui.maxValue = tank.Capacity;
-      field.SetValue(this, tank.Amount);
+      bf.SetValue(tank.Amount, this);
       bf.guiName = tank.Resource.Name;
+      bf.Attribute.guiName = tank.Resource.Name;
       if (IsInEditor) {
+        var ctrl = bf.uiControlEditor as UI_ProgressBar;
+        ctrl.controlEnabled = true;
+        ctrl.minValue = 0f;
+        ctrl.maxValue = tank.Capacity;
         bf.OnValueModified += (value) => {
           tank.Amount = (float) value;
         };
+      } else {
+        var ctrl = bf.uiControlFlight as UI_ProgressBar;
+        ctrl.controlEnabled = false;
+        ctrl.minValue = 0f;
+        ctrl.maxValue = tank.Capacity;
       }
     }
   }
@@ -74,8 +82,25 @@ public class HgPartTank : HgVirtualPartModule {
   public override void OnSynchronized() {
     base.OnSynchronized();
     var tanks = Tanks.ToArray();
+    // TODO: don't set this every single time
     for (var i = 0; i < tanks.Length; i++) {
-      tankUIs[i].SetValue(this, tanks[i].Amount);
+      var bf = tankUIs[i];
+      if (IsInEditor) {
+        var ctrl = bf.uiControlEditor as UI_ProgressBar;
+        ctrl.controlEnabled = true;
+        ctrl.minValue = 0f;
+        ctrl.maxValue = tanks[i].Capacity;
+        bf.OnValueModified += (value) => {
+          tanks[i].Amount = (float) value;
+        };
+      } else {
+        var ctrl = bf.uiControlFlight as UI_ProgressBar;
+        ctrl.controlEnabled = false;
+        ctrl.minValue = 0f;
+        ctrl.maxValue = tanks[i].Capacity;
+      }
+      tankUIs[i].SetValue(tanks[i].Amount, this);
+      // tankUIs[i].guiName = tanks[i].Resource.Name;
     }
   }
 }

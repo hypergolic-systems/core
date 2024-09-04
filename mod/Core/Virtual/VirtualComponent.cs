@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using Hgs.Game.Components.Electrical;
+using Hgs.Game.Components.Tankage;
 
 namespace Hgs.Core.Virtual;
 
@@ -10,6 +11,7 @@ public abstract class VirtualComponent {
   private static List<Type> COMPONENT_TYPES = new() {
     typeof(Battery),
     typeof(RadioisotopeThermalGenerator),
+    typeof(Tank),
   };
 
   private static Dictionary<string, Type> COMPONENT_TYPE_MAP = new();
