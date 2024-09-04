@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Hgs.Core.Engine;
 using Hgs.Core.Virtual;
+using Hgs.Game.Components;
 using UnityEngine;
 
 public class HgPartEngine : HgVirtualPartModule {
@@ -24,6 +25,9 @@ public class HgPartEngine : HgVirtualPartModule {
   private OperatingMode activeMode => modes[activeModeIndex];
 
   public override void InitializeComponents() {
+    this.VirtualPart.AddComponent(new Engine {
+      Modes = modes,
+    });
   }
 
   public override void OnStart(StartState state) {
@@ -40,23 +44,21 @@ public class HgPartEngine : HgVirtualPartModule {
   }
 
   public void FixedUpdate() {
+    var engine = this.VirtualPart.Components[0] as Engine;
     if (active) {
-      var activeIsp = activeMode.IspCurve.Evaluate((float) part.staticPressureAtm);
-      var activeMassFlow = activeMode.MaxMassFlowRate * this.vessel.ctrlState.mainThrottle;
-      var activeThrustN = activeIsp * activeMassFlow * OperatingMode.G;
-      // Note: our thrust is in Newtons, but KSP uses kilonewtons for force, so divide by 1,000.
-      var activeThrustKn = activeThrustN / 1000f;
+      var totalThrust = engine.FixedUpdate_Thrust(this.vessel.ctrlState.mainThrottle, (float) part.staticPressureAtm);
       var multiplier = 1f / thrustTransforms.Count;
 
-      var label = $"Mass: {Math.Round(activeMassFlow, 2)} kg/s\nIsp: {Math.Round(activeIsp, 2)}";
-      foreach (var ing in activeMode.Recipe.Ingredients) {
-        label += $"\n{ing.Resource.Name}: {Math.Round(ing.VolumetricFlowPerUnitMass * activeMassFlow, 2)} L/s";
-      }
-      data = label;
+      data = $"Thrust: {totalThrust} kN";
+      // var label = $"Mass: {Math.Round(activeMassFlow, 2)} kg/s\nIsp: {Math.Round(activeIsp, 2)}\nThrust: {Math.Round(activeThrustKn, 2)} kN";
+      // foreach (var ing in activeMode.Recipe.Ingredients) {
+      //   label += $"\n{ing.Resource.Name}: {Math.Round(ing.VolumetricFlowPerUnitMass * activeMassFlow, 2)} L/s";
+      // }
+      // data = label;
 
       foreach (var thrustTransform in thrustTransforms) {
-        var thrust = -thrustTransform.forward * activeThrustKn * multiplier;
-        this.part.AddForceAtPosition(thrust, thrustTransform.position);
+        var nozzleThrust = -thrustTransform.forward * totalThrust * multiplier;
+        this.part.AddForceAtPosition(nozzleThrust, thrustTransform.position);
       }
     }
   }

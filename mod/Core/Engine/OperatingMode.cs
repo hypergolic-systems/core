@@ -22,4 +22,12 @@ public class OperatingMode {
       MaxMassFlowRate = 1000f * maxThrust / (ispCurve.Evaluate(0) * G),
     };
   }
+
+  public void SaveToConfig(ConfigNode node) {
+    node.AddValue("name", Name);
+    node.AddValue("recipe", Recipe.Id);
+    node.AddValue("maxThrust", MaxThrust.ToString());
+    var ispNode = node.AddNode("ISP");
+    IspCurve.Save(ispNode);
+  }
 }
