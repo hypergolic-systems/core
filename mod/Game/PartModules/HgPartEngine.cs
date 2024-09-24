@@ -25,7 +25,7 @@ public class HgPartEngine : HgVirtualPartModule {
   private OperatingMode activeMode => modes[activeModeIndex];
 
   public override void InitializeComponents() {
-    this.VirtualPart.AddComponent(new Engine {
+    VirtualPart.AddComponent(new Engine {
       Modes = modes,
     });
   }
@@ -33,7 +33,7 @@ public class HgPartEngine : HgVirtualPartModule {
   public override void OnStart(StartState state) {
     base.OnStart(state);
     thrustTransforms = this.thrustTransforms = this.part.FindModelTransforms(this.thrustVectorTransformName).ToList();
-    Debug.Assert(modes.Count > 0, "No recipes found for engine");
+    Debug.Assert(modes?.Count > 0, "No recipes found for engine");
   }
 
   bool active = false;
@@ -64,6 +64,7 @@ public class HgPartEngine : HgVirtualPartModule {
   }
 
   public override void LoadStaticData(ConfigNode config) {
+    Util.Log("[HgPartEngine.LoadStaticData] " + config.ToString());
     base.LoadStaticData(config);
     modes = config.GetNodes("MODE").Select(OperatingMode.FromConfig).ToList();
   }

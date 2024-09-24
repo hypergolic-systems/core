@@ -13,11 +13,13 @@ public class Tank : VirtualComponent, ResourceSystem.IBuffer {
   protected override void Load(ConfigNode node) {
     Amount = float.Parse(node.GetValue("amount"));
     Capacity = float.Parse(node.GetValue("volume"));
+    Resource = Resource.Get(node.GetValue("id"));
   }
 
   protected override void Save(ConfigNode node) {
     node.AddValue("amount", Amount.ToString());
     node.AddValue("volume", Capacity.ToString());
+    node.AddValue("id", Resource.Id);
   }
 
   public override void OnActivate(VirtualVessel virtualVessel) {

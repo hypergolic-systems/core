@@ -30,6 +30,7 @@ public class BufferedRealtimeConsumer {
   public BufferedRealtimeConsumer() {}
 
   public static BufferedRealtimeConsumer FromPropellantRecipe(VirtualVessel vessel, VirtualComponent engine, PropellantRecipe recipe, float maxVolumetricFlow) {
+    
     var group = new BufferedRealtimeConsumer();
 
     var recipeTotalVolume = recipe.Ingredients.Sum(i => i.VolumePartInRecipe);

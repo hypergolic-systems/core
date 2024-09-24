@@ -67,6 +67,12 @@ public class VirtualVessel {
       spacecraft.Add(sc);
     }
 
+    foreach (var part in this.virtualParts.Values) {
+      foreach (var component in part.Components) {
+        component.OnActivate(this);
+      }
+    }
+
     if (IsLive) {
       SynchronizeWithKsp();
     }

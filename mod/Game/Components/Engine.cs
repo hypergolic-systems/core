@@ -1,18 +1,25 @@
 using System.Collections.Generic;
 using System.Linq;
 using Hgs.Core.Engine;
+using Hgs.Core.Resources;
 using Hgs.Core.Virtual;
+using UnityEngine;
 
 namespace Hgs.Game.Components;
 
 public class Engine : VirtualComponent {
-
   public List<OperatingMode> Modes;
   public int selectedMode = 0;
 
   private OperatingMode activeMode => Modes[selectedMode];
 
+  private BufferedRealtimeConsumer FuelConsumer;
+
   public float FixedUpdate_Thrust(float throttle, float atmPressure) {
+    if (FuelConsumer == null || !FuelConsumer.TryConsumeDuringFixedUpdate(throttle, Time.fixedDeltaTime)) {
+      return 0;
+    }
+
     var activeIsp = activeMode.IspCurve.Evaluate((float) atmPressure);
     var activeMassFlow = activeMode.MaxMassFlowRate * throttle;
     var activeThrustN = activeIsp * activeMassFlow * OperatingMode.G;
@@ -23,7 +30,7 @@ public class Engine : VirtualComponent {
 
   
   public override void OnActivate(VirtualVessel virtualVessel) {
-    throw new System.NotImplementedException();
+    FuelConsumer = BufferedRealtimeConsumer.FromPropellantRecipe(virtualVessel, this, activeMode.Recipe, activeMode.MaxVolumetricFlow);
   }
 
   protected override void Load(ConfigNode node) {
@@ -31,9 +38,8 @@ public class Engine : VirtualComponent {
   }
 
   protected override void Save(ConfigNode node) {
-    var modes = node.AddNode("MODES");
     foreach (var mode in Modes) {
-      mode.SaveToConfig(modes.AddNode("MODE"));
+      mode.SaveToConfig(node.AddNode("MODE"));
     }
   }
 }
